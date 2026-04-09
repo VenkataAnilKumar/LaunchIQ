@@ -1,0 +1,111 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+
+jobs:
+  integration:
+    name: E2E Pipeline Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: launchiq
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+asyncpg://postgres:password@localhost:5432/launchiq
+      REDIS_URL: redis://localhost:6379/0
+      ENVIRONMENT: development
+      INTEGRATION_ENCRYPTION_KEY: ${{ secrets.INTEGRATION_ENCRYPTION_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+      LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pip install poetry==1.8.3
+
+      - name: Install dependencies
+        run: |
+          poetry config virtualenvs.create false
+          poetry install --no-interaction --no-root
+
+      - name: Create database tables
+        run: |
+          python - <<'EOF'
+          import asyncio, sys
+          sys.path.insert(0, ".")
+          from sqlalchemy.ext.asyncio import create_async_engine
+          from src.apps.api.models.launch import Base
+          import src.apps.api.models.agent   # noqa: F401 — register models
+          import src.apps.api.models.hitl    # noqa: F401
+          import src.apps.api.models.user    # noqa: F401
+
+          engine = create_async_engine(
+              "postgresql+asyncpg://postgres:password@localhost:5432/launchiq"
+          )
+
+          async def main() -> None:
+              async with engine.begin() as conn:
+                  await conn.run_sync(Base.metadata.create_all)
+              await engine.dispose()
+
+          asyncio.run(main())
+          EOF
+
+      - name: Start API server
+        run: |
+          uvicorn src.apps.api.main:app --host 0.0.0.0 --port 8000 &
+          echo "Waiting for API to become healthy..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/api/v1/health > /dev/null 2>&1; then
+              echo "API is ready after ${i} attempts"
+              exit 0
+            fi
+            echo "  attempt ${i}/30 — retrying in 2s"
+            sleep 2
+          done
+          echo "API did not become healthy within 60s" >&2
+          exit 1
+
+      - name: Run integration tests
+        if: ${{ env.ANTHROPIC_API_KEY != '' }}
+        env:
+          API_BASE_URL: http://localhost:8000
+        run: pytest src/tests/test_e2e.py -m integration -v --tb=short
+
+      - name: Skip notice (no ANTHROPIC_API_KEY)
+        if: ${{ env.ANTHROPIC_API_KEY == '' }}
+        run: |
+          echo "::warning::ANTHROPIC_API_KEY secret is not set — integration tests skipped."
+          echo "Add the secret in Settings → Secrets and variables → Actions to enable full E2E coverage."
