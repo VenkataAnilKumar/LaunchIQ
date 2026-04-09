@@ -10,7 +10,7 @@ from __future__ import annotations
 import uuid
 from typing import Annotated, AsyncIterator
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -38,6 +38,18 @@ class LaunchResponse(BaseModel):
     created_at: str
 
 
+class LaunchListItem(BaseModel):
+    launch_id: str
+    status: str
+    product_name: str
+    description: str
+    target_market: str
+    competitors: list[str]
+    launch_date: str | None = None
+    created_at: str
+    updated_at: str
+
+
 class LaunchDetailResponse(BaseModel):
     launch_id: str
     status: str
@@ -53,13 +65,27 @@ class LaunchDetailResponse(BaseModel):
 
 @router.post("", response_model=LaunchResponse, status_code=201)
 async def create_launch(
+    request: Request,
     body: LaunchBriefRequest,
     background_tasks: BackgroundTasks,
     service: Annotated[LaunchService, Depends(get_launch_service)],
 ) -> LaunchResponse:
-    launch = await service.create(body.model_dump())
+    user_id = getattr(request.state, "user_id", "dev")
+    launch = await service.create(body.model_dump(), user_id=user_id)
     background_tasks.add_task(service.run_pipeline, launch["launch_id"])
     return LaunchResponse(**launch)
+
+
+@router.get("", response_model=list[LaunchListItem])
+async def list_launches(
+    request: Request,
+    service: Annotated[LaunchService, Depends(get_launch_service)],
+) -> list[LaunchListItem]:
+    user_id = getattr(request.state, "user_id", None)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    launches = await service.list_by_user(user_id)
+    return [LaunchListItem(**launch) for launch in launches]
 
 
 @router.get("/{launch_id}", response_model=LaunchDetailResponse)

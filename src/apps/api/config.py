@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     clerk_publishable_key: str = ""
     clerk_secret_key: str = ""
     clerk_jwt_audience: str = ""
+    integration_encryption_key: str = ""
 
     # Database
     database_url: str = "postgresql+asyncpg://postgres:password@localhost:5432/launchiq"

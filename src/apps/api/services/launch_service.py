@@ -34,6 +34,25 @@ class LaunchService:
 				"created_at": created_at.isoformat(),
 			}
 
+	async def list_by_user(self, user_id: str) -> list[dict[str, Any]]:
+		async with AsyncSessionLocal() as db:
+			launch_repo = LaunchRepository(db)
+			launches = await launch_repo.list_by_user(user_id)
+			return [
+				{
+					"launch_id": launch.launch_id,
+					"status": _status_value(launch.status),
+					"product_name": launch.product_name,
+					"description": launch.description,
+					"target_market": launch.target_market,
+					"competitors": list(launch.competitors or []),
+					"launch_date": launch.launch_date,
+					"created_at": launch.created_at.isoformat() if launch.created_at else datetime.utcnow().isoformat(),
+					"updated_at": launch.updated_at.isoformat() if launch.updated_at else datetime.utcnow().isoformat(),
+				}
+				for launch in launches
+			]
+
 	async def get(self, launch_id: str) -> dict[str, Any] | None:
 		async with AsyncSessionLocal() as db:
 			launch_repo = LaunchRepository(db)

@@ -768,209 +768,599 @@ Each tool server's auth tokens come from User.integrations JSON column (passed i
 
 ---
 
-## PHASE 6 — Frontend
+## PHASE 6 — Frontend (Modern 2026)
 
-### Prompt 6A — Next.js Config + Package Setup
+> **Stack:** Next.js 15 (App Router + PPR) · React 19 · Tailwind CSS v4 · shadcn/ui · Zustand v5 · TanStack Query v5 · Clerk · openapi-typescript
+
+---
+
+### Prompt 6A — Package Setup + Config
 
 > Open: `src/apps/web/package.json`, `src/apps/web/next.config.ts`, `src/apps/web/tailwind.config.ts`, `src/apps/web/tsconfig.json`
 
 ```
-Set up the Next.js 15 frontend configuration files.
+Set up the Next.js 15 + React 19 frontend for 2026. Use the exact versions below.
 
-package.json — complete with:
+package.json:
 {
   "name": "@launchiq/web",
-  "scripts": { "dev": "next dev", "build": "next build", "lint": "next lint", "typecheck": "tsc --noEmit" },
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "generate:api-types": "openapi-typescript http://localhost:8000/openapi.json -o src/types/api.ts"
+  },
   "dependencies": {
-    "next": "15.x", "react": "19.x", "react-dom": "19.x",
-    "@clerk/nextjs": "latest",
+    "next": "15.3.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "@clerk/nextjs": "^6.0.0",
     "zustand": "^5.0.0",
     "@tanstack/react-query": "^5.0.0",
-    "tailwindcss": "^3.4.0",
-    "class-variance-authority": "latest", "clsx": "latest", "tailwind-merge": "latest",
-    "lucide-react": "latest",
-    "@radix-ui/react-dialog": "latest", "@radix-ui/react-badge": "latest"
+    "@tanstack/react-query-devtools": "^5.0.0",
+    "react-hook-form": "^7.54.0",
+    "zod": "^3.24.0",
+    "@hookform/resolvers": "^3.9.0",
+    "nuqs": "^2.0.0",
+    "tailwindcss": "^4.0.0",
+    "@tailwindcss/vite": "^4.0.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^2.5.0",
+    "lucide-react": "^0.468.0",
+    "@radix-ui/react-dialog": "^1.1.0",
+    "@radix-ui/react-tabs": "^1.1.0",
+    "@radix-ui/react-dropdown-menu": "^2.1.0",
+    "@radix-ui/react-tooltip": "^1.1.0",
+    "@radix-ui/react-avatar": "^1.1.0",
+    "@radix-ui/react-badge": "^1.0.0",
+    "@radix-ui/react-separator": "^1.1.0",
+    "sonner": "^1.7.0"
   },
-  "devDependencies": { "typescript": "^5.0.0", "@types/react": "^19.0.0", "@types/node": "^22.0.0" }
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/react": "^19.0.0",
+    "@types/node": "^22.0.0",
+    "openapi-typescript": "^7.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "15.3.0"
+  }
 }
 
 next.config.ts:
-- Type: NextConfig
-- rewrites: proxy /api/v1/* to process.env.API_URL/api/v1/* (for local dev CORS)
-- env: expose NEXT_PUBLIC_API_URL, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+import type { NextConfig } from 'next'
 
-tailwind.config.ts:
-- content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"]
-- theme.extend.colors: { brand: { primary: "#6366f1", secondary: "#8b5cf6" } }
+const config: NextConfig = {
+  experimental: {
+    ppr: true,               // Partial Prerendering — static shell + streaming dynamic parts
+    reactCompiler: true,     // React 19 compiler — auto-memoization
+    typedRoutes: true,       // Compile-time route type safety
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/v1/:path*',
+        destination: `${process.env.API_URL ?? 'http://localhost:8000'}/api/v1/:path*`,
+      },
+    ]
+  },
+}
+export default config
+
+tailwind.config.ts (Tailwind v4 — CSS-first, minimal JS config):
+import type { Config } from 'tailwindcss'
+
+export default {
+  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        brand: {
+          primary:   'oklch(0.55 0.22 264)',
+          secondary: 'oklch(0.60 0.20 290)',
+          accent:    'oklch(0.70 0.18 200)',
+        },
+      },
+      animation: {
+        'pulse-slow':   'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'thinking':     'thinking 1.5s ease-in-out infinite',
+        'slide-in':     'slideIn 0.2s ease-out',
+      },
+      keyframes: {
+        thinking: {
+          '0%, 100%': { opacity: '1' },
+          '50%':      { opacity: '0.3' },
+        },
+        slideIn: {
+          from: { transform: 'translateY(8px)', opacity: '0' },
+          to:   { transform: 'translateY(0)',   opacity: '1' },
+        },
+      },
+    },
+  },
+} satisfies Config
 
 tsconfig.json:
-- strict: true, target: "ES2022", paths: { "@/*": ["./*"] }
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["dom", "dom.iterable", "ES2022"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [{ "name": "next" }],
+    "paths": { "@/*": ["./*"] }
+  }
+}
+
+Also create src/apps/web/app/globals.css:
+@import "tailwindcss";
+
+@theme {
+  --color-brand-primary:   oklch(0.55 0.22 264);
+  --color-brand-secondary: oklch(0.60 0.20 290);
+  --font-sans: "Inter Variable", system-ui, sans-serif;
+  --radius-default: 0.625rem;
+}
+
+Also create middleware.ts at src/apps/web/ root (Clerk 2026 pattern):
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+
+const isPublic = createRouteMatcher([
+  '/',
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+  '/api/v1/health(.*)',
+])
+
+export default clerkMiddleware(async (auth, req) => {
+  if (!isPublic(req)) await auth.protect()
+})
+
+export const config = {
+  matcher: ['/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)', '/(api|trpc)(.*)'],
+}
 ```
 
 ---
 
-### Prompt 6B — Stores + API Client + SSE Hook
+### Prompt 6B — Auto-generated API Types + Query Client
 
-> Open: `src/apps/web/store/launchStore.ts`, `src/apps/web/store/agentStore.ts`, `src/apps/web/lib/api.ts`, `src/apps/web/lib/sse.ts`
+> Create: `src/apps/web/src/types/api.ts` (auto-generated), `src/apps/web/lib/query-client.ts`, `src/apps/web/lib/api.ts`, `src/apps/web/app/providers.tsx`
 
 ```
-Implement stores and client utilities.
+Set up end-to-end type safety using openapi-typescript + TanStack Query v5.
 
-store/launchStore.ts — useLaunchStore (Zustand):
-- State: launch: Launch|null, agents: AgentRun[], hitl: HITLState|null, isStreaming: boolean
-- Actions: setLaunch, updateAgent, setHITL, setStreaming, reset
-- updateAgent: upsert by agent_id (update if exists, append if not)
+STEP 1 — Generate types from FastAPI (run this command first):
+  pnpm generate:api-types
+This creates src/types/api.ts from http://localhost:8000/openapi.json automatically.
+If API is not running yet, create a placeholder src/types/api.ts:
+  export type paths = Record<string, unknown>
+  export type components = { schemas: Record<string, unknown> }
 
-store/agentStore.ts — useAgentStore (Zustand):
-- State: events: AgentEvent[], currentAgent: AgentId|null
-- AgentEvent type: {type: string, agent_id?: AgentId, output?: unknown, error?: string, timestamp: string}
-- Actions: addEvent(event), setCurrentAgent, clearEvents
+STEP 2 — lib/query-client.ts:
+Create a singleton QueryClient with these defaults:
+- staleTime: 30_000 (30s — avoid over-fetching for AI outputs)
+- retry: 1
+- refetchOnWindowFocus: false (agent outputs don't change while tab is hidden)
 
-lib/api.ts — typed API client:
-- createLaunch(data) -> Promise<{launch_id, status}>: POST /api/v1/launches
-- getLaunch(launchId) -> Promise<LaunchDetailResponse>: GET /api/v1/launches/{id}
-- resolveHITL(launchId, decision, edits?) -> Promise<{status, next_step}>: POST /api/v1/hitl/{id}/decide
-- getPendingHITL(launchId) -> Promise<HITLState|null>: GET /api/v1/hitl/{id}/pending
-- retryAgent(launchId, agentId) -> Promise<{status}>: POST /api/v1/agents/{launchId}/{agentId}/retry
-- All functions: include Authorization header from Clerk getToken()
-- Error handling: throw Error with parsed message on non-2xx
+Export: getQueryClient() that returns singleton on server, new instance on client.
 
-lib/sse.ts — useSSE React hook:
-- useSSE(launchId: string|null, onEvent: (event: unknown) => void): void
-- Creates EventSource to /api/v1/launches/{id}/stream
-- Calls onEvent on each message (parse JSON)
-- Auto-reconnect on error after SSE_RECONNECT_DELAY_MS
-- Cleans up EventSource on unmount or launchId change
+STEP 3 — lib/api.ts (typed fetch client using generated types):
+Import paths from src/types/api.ts.
+
+Implement these typed functions using native fetch:
+
+async function apiFetch<T>(path: string, options?: RequestInit): Promise<T>
+- Gets Clerk token: const { getToken } = await import('@clerk/nextjs/server') on server
+  OR useAuth() hook token on client — detect via typeof window
+- Sets Authorization: Bearer {token} header
+- Throws ApiError (custom class with status + message) on non-2xx
+- Returns parsed JSON as T
+
+Export:
+- createLaunch(data: LaunchBriefRequest): POST /api/v1/launches → Launch
+- getLaunch(id: string): GET /api/v1/launches/{id} → LaunchDetailResponse
+- listLaunches(): GET /api/v1/launches → Launch[]
+- resolveHITL(id: string, body: HITLDecision): POST /api/v1/hitl/{id}/decide
+- getPendingHITL(id: string): GET /api/v1/hitl/{id}/pending → HITLState | null
+- retryAgent(launchId: string, agentId: string): POST /api/v1/agents/{launchId}/{agentId}/retry
+- listIntegrations(): GET /api/v1/integrations → {hubspot: bool, slack: bool, ga4: bool}
+- connectIntegration(name: string, creds: object): POST /api/v1/integrations/{name}
+- disconnectIntegration(name: string): DELETE /api/v1/integrations/{name}
+
+All types reference the generated api.ts types. No manual type duplication.
+
+STEP 4 — app/providers.tsx (React 19 pattern):
+'use client'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { getQueryClient } from '@/lib/query-client'
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const queryClient = getQueryClient()
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+      {process.env.NODE_ENV === 'development' && <ReactQueryDevtools />}
+    </QueryClientProvider>
+  )
+}
 ```
 
 ---
 
-### Prompt 6C — Core Components
+### Prompt 6C — Zustand Stores + SSE Hook
 
-> Open all component files in `src/apps/web/components/`
+> Open: `src/apps/web/store/launchStore.ts`, `src/apps/web/store/agentStore.ts`, `src/apps/web/lib/sse.ts`
 
 ```
-Implement all UI components. Use Tailwind CSS + shadcn/ui patterns. No external component libraries beyond what's in package.json.
+Implement Zustand v5 stores and SSE hook using 2026 patterns.
+
+store/launchStore.ts — Zustand v5 with immer middleware:
+import { create } from 'zustand'
+import { immer } from 'zustand/middleware/immer'
+import type { Launch, AgentRun, HITLState, AgentId } from '@/src/packages/types'
+
+interface LaunchStore {
+  launch:      Launch | null
+  agents:      AgentRun[]
+  hitl:        HITLState | null
+  isStreaming: boolean
+  // Actions
+  setLaunch:     (l: Launch) => void
+  upsertAgent:   (a: AgentRun) => void   // insert or update by agent_id
+  setHITL:       (h: HITLState | null) => void
+  setStreaming:   (v: boolean) => void
+  reset:         () => void
+}
+
+export const useLaunchStore = create<LaunchStore>()(
+  immer((set) => ({
+    launch: null, agents: [], hitl: null, isStreaming: false,
+    setLaunch:   (l) => set((s) => { s.launch = l }),
+    upsertAgent: (a) => set((s) => {
+      const idx = s.agents.findIndex((x) => x.agent_id === a.agent_id)
+      if (idx >= 0) s.agents[idx] = a
+      else s.agents.push(a)
+    }),
+    setHITL:     (h) => set((s) => { s.hitl = h }),
+    setStreaming: (v) => set((s) => { s.isStreaming = v }),
+    reset:       () => set(() => ({ launch: null, agents: [], hitl: null, isStreaming: false })),
+  }))
+)
+
+store/agentStore.ts — event log store:
+interface AgentEvent {
+  type:      string
+  agent_id?: AgentId
+  output?:   unknown
+  error?:    string
+  timestamp: string
+}
+interface AgentStore {
+  events:        AgentEvent[]
+  currentAgent:  AgentId | null
+  addEvent:      (e: AgentEvent) => void
+  setCurrentAgent: (id: AgentId | null) => void
+  clearEvents:   () => void
+}
+Use immer middleware. addEvent appends with timestamp = new Date().toISOString().
+
+lib/sse.ts — useSSE hook (React 19, no useEffect anti-patterns):
+'use client'
+import { useEffect, useRef, useCallback } from 'react'
+
+const SSE_RECONNECT_MS = 3000
+
+export function useSSE(
+  launchId: string | null,
+  onEvent: (event: unknown) => void
+): { connected: boolean } {
+  const esRef      = useRef<EventSource | null>(null)
+  const retryRef   = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const connRef    = useRef(false)
+
+  const connect = useCallback(() => {
+    if (!launchId) return
+    esRef.current?.close()
+
+    const url = `/api/v1/launches/${launchId}/stream`
+    const es  = new EventSource(url)
+    esRef.current = es
+
+    es.onopen    = () => { connRef.current = true }
+    es.onmessage = (e) => {
+      try { onEvent(JSON.parse(e.data)) } catch {}
+    }
+    es.onerror = () => {
+      connRef.current = false
+      es.close()
+      retryRef.current = setTimeout(connect, SSE_RECONNECT_MS)
+    }
+  }, [launchId, onEvent])
+
+  useEffect(() => {
+    connect()
+    return () => {
+      esRef.current?.close()
+      if (retryRef.current) clearTimeout(retryRef.current)
+    }
+  }, [connect])
+
+  return { connected: connRef.current }
+}
+```
+
+---
+
+### Prompt 6D — AI-Native Components (2026 Patterns)
+
+> Open all files in `src/apps/web/components/`
+
+```
+Implement all UI components using 2026 AI-native patterns.
+Use Tailwind CSS v4 + shadcn/ui primitives (Button, Card, Badge, Dialog, Tabs from @radix-ui).
+Use lucide-react for icons. Use sonner for toast notifications.
+
+--- AGENT COMPONENTS ---
 
 components/agents/AgentCard.tsx:
-- Props: agent: AgentRun
-- Shows: agent name (formatted), status badge, token count, completion time if done
-- Status colors: pending=gray, running=blue (animated pulse), completed=green, failed=red
-- Expand/collapse to show output JSON preview on click
-- Running state: animated spinner + "Thinking..." text
+Props: agent: AgentRun
+2026 AI-native patterns to apply:
+- Status badge: pending=slate, running=blue+animate-pulse, completed=emerald, failed=red, skipped=slate/50
+- Running state: show "Thinking..." with animate-thinking dots + brain icon from lucide
+- Tool call badges: if agent.output?.tool_calls, show each tool called as a small badge (e.g. "tavily_search ×3")
+- Token counter: show tokens_used with sparkles icon — animate count-up from 0 when completed
+- Completion time: show duration in seconds (completed_at - started_at)
+- Expand: click card body to reveal output as syntax-highlighted JSON (use <pre className="text-xs overflow-auto max-h-64">)
+- Glow effect when running: ring-2 ring-blue-400/50 shadow-blue-400/20 shadow-lg
 
 components/agents/AgentPipeline.tsx:
-- Props: agents: AgentRun[], currentAgent: AgentId|null
-- Shows 4 AgentCards in vertical sequence with connecting arrows between them
-- Highlights current running agent with glow effect
-- Overall progress indicator (X/4 complete)
+Props: agents: AgentRun[], currentAgent: AgentId | null
+- Vertical sequence of AgentCards with animated connector lines between them
+- Connector line color: completed=emerald, active=blue animated dashes, pending=slate
+- Progress bar at top: "2 / 4 agents complete" with emerald fill
+- Overall status chip: "Running Market Intelligence..." or "All agents complete ✓"
+- Animate slide-in for each card as agents are added (animate-slide-in)
 
 components/agents/AgentStream.tsx:
-- Props: launchId: string
-- Uses useSSE hook to subscribe to events
-- Updates useLaunchStore and useAgentStore on each event
-- Handles event types: agent_started, agent_completed, agent_failed, hitl_required, connected
+Props: launchId: string
+- Subscribes to useSSE, routes events to stores
+- Event routing:
+  connected       → setStreaming(true)
+  agent_started   → upsertAgent({...agent, status:'running', started_at: now})
+                    setCurrentAgent(agent_id)
+  agent_completed → upsertAgent({...agent, status:'completed', output, tokens_used})
+                    setCurrentAgent(null)
+  agent_failed    → upsertAgent({...agent, status:'failed', error})
+                    toast.error(`${agent_id} failed: ${error}`)
+  hitl_required   → setHITL(checkpoint_state)
+                    toast.info("Action required: Review and approve to continue")
+  error           → toast.error(message)
+- Returns null (no visual output — side-effects only)
+
+--- HITL COMPONENTS (2026 Human-in-the-Loop patterns) ---
 
 components/hitl/HITLCheckpoint.tsx:
-- Props: state: HITLState, onResolve: (decision, edits?) => void
-- Full-page overlay (fixed inset-0 z-50 bg-black/50)
-- Shows: checkpoint name, which agent produced this, output preview
-- Contains HITLDecisionBar
+Props: state: HITLState, onResolve: (decision: HITLDecision, edits?: Record<string,unknown>) => void
+- Full-page modal overlay: fixed inset-0 z-50, backdrop-blur-sm bg-black/60
+- Slide-up card: max-w-2xl mx-auto mt-20 animate-slide-in
+- Header: yellow warning banner "Action Required" + checkpoint name + agent that produced it
+- Body: scrollable output preview (JSON rendered as readable key-value pairs, not raw JSON)
+- Contains HITLDecisionBar at bottom
+- Trap focus inside modal (Radix Dialog handles this)
+- Press Escape = open reject confirmation
 
 components/hitl/HITLDecisionBar.tsx:
-- Props: onApprove, onEdit, onReject (callbacks)
-- Three buttons: Approve (green), Edit (yellow), Reject (red)
-- Approve: calls onApprove directly
-- Edit: opens HITLEditModal
-- Reject: shows confirmation dialog before calling onReject
-- Loading state while resolving
+Props: onApprove: () => void, onEdit: () => void, onReject: () => void, isPending: boolean
+- Three-button row at bottom of HITL overlay
+- Approve: emerald button + CheckCircle icon — calls onApprove
+- Edit:    yellow button + PencilLine icon — calls onEdit (opens HITLEditModal)
+- Reject:  red outline button + XCircle icon — opens confirmation AlertDialog before calling onReject
+- All buttons disabled + show Loader2 spinner when isPending=true
+- Keyboard: Enter = approve, E = edit, Escape = reject confirmation
 
 components/hitl/HITLEditModal.tsx:
-- Props: initialData: Record<string,unknown>, onSave: (edits: Record<string,unknown>) => void, onClose
-- Textarea showing JSON.stringify(initialData, null, 2) 
-- Parse JSON on save, show validation error if invalid
-- Save button calls onSave with parsed edits
+Props: initialData: Record<string,unknown>, onSave: (edits: Record<string,unknown>) => void, onClose: () => void
+- Radix Dialog inside the HITLCheckpoint overlay
+- Textarea: monospace font, pre-filled with JSON.stringify(initialData, null, 2)
+- Live validation: parse JSON on change, show red border + error message if invalid
+- Diff preview: show which keys changed vs original (highlight changed lines in yellow)
+- Save button: disabled if JSON invalid, calls onSave(parsed) on click
+- Cancel button: calls onClose
+
+--- LAUNCH COMPONENTS ---
 
 components/launch/IntakeForm.tsx:
-- Fields: product_name (text), description (textarea), target_market (text), competitors (tag input — type + Enter to add, X to remove)
-- Validates all required fields before submit
-- On submit: calls createLaunch() from api.ts, navigates to /launch/{id}/tracker
-- Loading state during submission
+Use React Hook Form + Zod for validation.
 
-components/launch/BriefCard.tsx — shows market intelligence output in card layout
-components/launch/PersonaCard.tsx — shows a Persona with avatar initial, role, pain points, channels
-components/launch/StrategyPhase.tsx — shows a LaunchPhase with timeline indicator
-components/launch/ContentBlock.tsx — shows a ContentItem with format badge, headline, body, CTA
+Schema (define inline):
+const schema = z.object({
+  product_name:  z.string().min(2).max(100),
+  description:   z.string().min(20).max(1000),
+  target_market: z.string().min(5).max(200),
+  competitors:   z.array(z.string()).max(10).default([]),
+  launch_date:   z.string().optional(),
+})
+
+UI:
+- product_name: text input + label
+- description: textarea (4 rows) + character counter
+- target_market: text input
+- competitors: tag input — type competitor name + Enter/comma to add, × to remove each tag
+  Store as controlled array, render as Badge list with × button
+- launch_date: date input (optional)
+- Submit: calls createLaunch(data) → on success: router.push(`/launch/${id}/tracker`)
+  Show Loader2 in button while submitting
+- Field errors: show below each field using react-hook-form formState.errors
+- Form-level error: show toast.error on API failure
+
+components/launch/BriefCard.tsx:
+Props: data: MarketData
+- Card with market size, growth rate as prominent stats
+- Competitor grid: each competitor as a mini-card (name, positioning badge, strength/weakness chips)
+- Trends list: each trend with relevance score pill
+- White space + positioning in highlighted callout box
+
+components/launch/PersonaCard.tsx:
+Props: persona: Persona, isPrimary?: boolean
+- Avatar: large initial letter circle with gradient background
+- Role + age range as subtitle
+- Pain points: red dot list
+- Goals: green dot list
+- Channels: icon badges (LinkedIn, Twitter, Email etc)
+- Message hook: italic quote block
+- "Primary" badge if isPrimary=true
+
+components/launch/StrategyPhase.tsx:
+Props: phase: LaunchPhase, index: number, isActive?: boolean
+- Timeline item: left vertical line + numbered circle
+- Phase name + duration as header
+- Goals, tactics, KPIs as collapsible sections
+- isActive: highlight with brand-primary border
+
+components/launch/ContentBlock.tsx:
+Props: item: ContentItem
+- Format badge (Email/LinkedIn/Twitter/Ad Copy) + variant pill (A/B)
+- Headline: large bold text
+- Body: paragraph with line clamp (expand on click)
+- CTA: button-style chip
+- Target persona tag
+- Copy-to-clipboard button on hover (uses navigator.clipboard)
 ```
 
 ---
 
-### Prompt 6D — Pages
+### Prompt 6E — Pages (Server Components + Streaming)
 
 > Open all page files in `src/apps/web/app/`
 
 ```
-Implement all Next.js App Router pages.
+Implement all Next.js 15 App Router pages using 2026 patterns.
+Default = Server Components. Add "use client" ONLY where interactivity is needed.
+Use TanStack Query for client data, direct async fetch for server data.
 
-app/(auth)/sign-in/page.tsx:
-- Clerk <SignIn /> component centered on page
+--- AUTH PAGES ---
 
-app/(auth)/sign-up/page.tsx:  
-- Clerk <SignUp /> component centered on page
+app/(auth)/sign-in/page.tsx — Server Component:
+import { SignIn } from '@clerk/nextjs'
+export default function SignInPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 to-slate-900">
+      <SignIn routing="hash" />
+    </div>
+  )
+}
 
-app/(app)/layout.tsx:
-- Clerk <ClerkProvider> + sidebar navigation: Dashboard, New Launch
-- User button in top-right
-- Protected: redirect to /sign-in if not authenticated
+app/(auth)/sign-up/page.tsx — same pattern with <SignUp />
 
-app/(app)/dashboard/page.tsx:
-- Fetch list of user's launches (GET /api/v1/launches)
-- Show as table: product name, status badge, created date, View button
-- "New Launch" CTA button → /launch/new
-- Empty state: "No launches yet. Create your first one."
+--- APP SHELL ---
 
-app/(app)/launch/new/page.tsx:
-- Renders IntakeForm
-- Full-page centered layout
+app/(app)/layout.tsx — Server Component:
+- Import ClerkProvider, wrap entire layout
+- Server-side auth check: redirect('/sign-in') if no userId
+- Sidebar: links to Dashboard + New Launch
+- UserButton from Clerk in top-right
+- Render {children} in main content area
+- Use Suspense with skeleton fallback around {children}
 
-app/(app)/launch/[id]/layout.tsx:
-- Tab navigation: Brief | Personas | Strategy | Content | Tracker
-- Fetch launch on mount, store in useLaunchStore
-- Show loading skeleton while fetching
+app/(app)/dashboard/page.tsx — Server Component (direct async fetch):
+- async function DashboardPage()
+- const launches = await listLaunches()  — direct server-side fetch with Clerk server token
+- Render LaunchTable (client component for sorting/filtering) with initial data
+- "New Launch" button → /launch/new
+- If launches.length === 0: show EmptyState component
 
-app/(app)/launch/[id]/tracker/page.tsx:
-- Renders AgentStream (subscribes to SSE)
-- Renders AgentPipeline
-- If hitl !== null: renders HITLCheckpoint overlay
-- On HITLCheckpoint resolve: calls resolveHITL() from api.ts
-- Real-time status updates via useAgentStore events
+Create components/launch/LaunchTable.tsx — Client Component:
+- Columns: Product Name, Status badge, Created date, View button
+- Client-side sort by created_at (useLocalSort hook)
+- Row click → router.push(/launch/{id}/tracker)
 
-app/(app)/launch/[id]/brief/page.tsx:
-- Shows market intelligence output from launch.brief.market_data
-- Uses BriefCard components
+--- LAUNCH PAGES ---
 
-app/(app)/launch/[id]/personas/page.tsx:
-- Shows audience insight output
-- Grid of PersonaCard components
+app/(app)/launch/new/page.tsx — Server Component wrapper:
+- export const metadata = { title: 'New Launch — LaunchIQ' }
+- Render <IntakeForm /> (which is 'use client')
+- Center vertically, max-w-xl
 
-app/(app)/launch/[id]/strategy/page.tsx:
-- Shows launch strategy phases
-- Timeline of StrategyPhase components
+app/(app)/launch/[id]/layout.tsx — Server Component:
+- Fetch launch server-side: const launch = await getLaunch(params.id)
+- If not found: notFound()
+- Pass launch to client store via <LaunchInitializer launch={launch} /> (tiny client component that calls setLaunch on mount)
+- Tab nav: Brief | Personas | Strategy | Content | Tracker
+  Use Next.js <Link> for each tab — active tab highlighted by comparing pathname
+- Show launch status badge next to product name in header
 
-app/(app)/launch/[id]/content/page.tsx:
-- Shows content bundle
-- Tabs: Email | Social | Ads
-- Grid of ContentBlock components
+app/(app)/launch/[id]/tracker/page.tsx — Client Component ('use client'):
+- This is the real-time page — must be client
+- Renders <AgentStream launchId={id} /> (subscribes to SSE, updates stores)
+- Renders <AgentPipeline agents={agents} currentAgent={currentAgent} /> from store
+- If hitl !== null: renders <HITLCheckpoint state={hitl} onResolve={handleResolve} />
+- handleResolve: calls resolveHITL() → on success: setHITL(null) + toast.success
+- Show "Launch complete! View your brief →" banner when all agents done
 
-app/(app)/settings/page.tsx:
+app/(app)/launch/[id]/brief/page.tsx — Server Component:
+- const launch = await getLaunch(params.id)
+- If no market data: show <AgentPending agentName="Market Intelligence" />
+- Else: render <BriefCard data={launch.brief.market_data} />
+- Wrap in Suspense with skeleton
+
+app/(app)/launch/[id]/personas/page.tsx — Server Component:
+- Grid of <PersonaCard> — primary first, then secondary
+- If no personas: show <AgentPending agentName="Audience Insight" />
+
+app/(app)/launch/[id]/strategy/page.tsx — Server Component:
+- Vertical timeline of <StrategyPhase> components
+- Budget allocation as a horizontal bar chart (use CSS widths — no chart library)
+- Risk list in red callout box
+
+app/(app)/launch/[id]/content/page.tsx — Client Component:
+- Tabs: Email | Social | Ads (Radix Tabs)
+- Each tab: grid of <ContentBlock> items
+- "Copy All" button per tab — copies all content as formatted text
+- If no content: show <AgentPending agentName="Content Generation" />
+
+app/(app)/settings/page.tsx — Client Component:
 - Integration cards for HubSpot, Slack, GA4
-- Connect/disconnect buttons
-- Show connected status from User.integrations
+- Each card: logo, name, description, status (connected/disconnected)
+- Connect button: opens modal to enter credentials
+- Disconnect: confirmation dialog → calls disconnectIntegration()
+- Use useQuery to fetch /api/v1/integrations for real-time connected status
+
+--- SHARED COMPONENTS TO CREATE ---
+
+components/ui/AgentPending.tsx:
+Props: agentName: string
+- Centered card: clock icon + "Waiting for {agentName} to complete..."
+- Subtle animate-pulse
+
+components/ui/EmptyState.tsx:
+Props: title, description, action?: { label, href }
+- Centered illustration (use lucide RocketIcon) + text + optional CTA button
+
+components/ui/LaunchInitializer.tsx ('use client'):
+- Takes launch prop, calls useLaunchStore.setLaunch(launch) on mount
+- Returns null — side effect only
 
 app/api/[...proxy]/route.ts:
-- Proxy all requests to API_URL (avoids CORS in development)
-- Pass Authorization header through
-- Support GET, POST, PUT, DELETE
+- Proxy /api/v1/* requests to process.env.API_URL
+- Forward Authorization header from incoming request
+- Support GET, POST, PUT, DELETE, PATCH
+- Set no-store cache for all proxied responses
+
+--- EXIT CRITERIA ---
+- pnpm typecheck passes with 0 errors
+- pnpm build completes successfully  
+- pnpm lint passes
+- Dashboard loads launches from server
+- Tracker page shows live agent updates via SSE
+- HITL overlay appears and resolves correctly
+- All 5 worker pages show correct data or AgentPending fallback
 ```
 
 ---
