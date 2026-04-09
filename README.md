@@ -242,7 +242,7 @@ Core product documents are organized in [`/docs`](./docs):
 
 ## Roadmap
 
-**Phase 1 — Core Intelligence Engine** *(Weeks 1–4)*
+**Phase 1 — Core Intelligence Engine** *(Completed)*
 - [x] Orchestrator agent + A2A coordination
 - [x] Market Intelligence Agent (competitor research + trends)
 - [x] Audience Insight Agent (persona builder)
@@ -250,24 +250,32 @@ Core product documents are organized in [`/docs`](./docs):
 - [x] HITL checkpoint system
 - [x] Real-time agent streaming UI (SSE)
 
-**Phase 2 — Content & Execution Layer** *(Weeks 5–8)*
+**Phase 2 — Content & Execution Layer** *(Completed)*
 - [x] Content Generation Agent (email, social, ad copy)
 - [x] User authentication middleware + launch APIs
 - [x] Async orchestration workers
-- [ ] Launch Execution Tracker UI
-- [ ] PDF / Notion export
+- [x] Analytics feedback agent baseline
+- [x] API status/event handling hardening
 
-**Phase 3 — Intelligence & Integrations** *(Weeks 9–12)*
-- [x] Analytics & Feedback Agent
+**Phase 3 — Intelligence & Integrations** *(Completed)*
+- [x] MCP base server and tool registry
 - [x] HubSpot integration (MCP)
 - [x] Slack integration (MCP)
 - [x] GA4 integration (MCP)
-- [ ] Long-term vector memory optimization (cross-session learning)
+- [x] Tavily and internal tool executors
 
-**Phase 4 — Scale** *(Post-Beta)*
+**Phase 4 — Product Experience (Current)**
+- [ ] Launch Execution Tracker UI
+- [ ] End-to-end web flow for brief -> personas -> strategy -> content
+- [ ] Frontend production polish and state persistence
+- [ ] PDF / Notion export
+
+**Phase 5 — Reliability and Scale** *(Next)*
+- [ ] Long-term vector memory optimization (cross-session learning)
 - [ ] Team collaboration
 - [ ] Custom brand voice learning
-- [ ] Enterprise contracts + SSO
+- [ ] Evaluation/regression automation pipeline
+- [ ] Enterprise readiness (SSO, audit trails, policy controls)
 
 ---
 
