@@ -1,0 +1,11 @@
+{
+	"product_name": "LaunchIQ",
+	"description": "AI-powered product launch intelligence platform for startup teams.",
+	"target_market": "B2B SaaS founders and product marketers",
+	"competitors": [
+		"ProductBoard",
+		"Wynter",
+		"LaunchDarkly"
+	],
+	"launch_date": "2026-06-01"
+}

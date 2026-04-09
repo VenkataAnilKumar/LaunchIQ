@@ -1,0 +1,58 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: pnpm/action-setup@v3
+        with: { version: 9 }
+      - run: pip install ruff mypy
+      - run: ruff check src/
+      - run: pnpm lint
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: 9 }
+      - run: pnpm install
+      - run: pnpm typecheck
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r src/apps/api/requirements.txt
+      - run: pytest src/ --cov=src --cov-report=xml
+      - uses: codecov/codecov-action@v4
+
+  eval-gate:
+    name: Eval Gate (Agent Quality)
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r src/apps/api/requirements.txt
+      - name: Run eval suite
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+          LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+        run: python src/evals/regression/run_regression.py
+      - name: Check eval scores vs baseline
+        run: python src/evals/regression/run_regression.py --assert-baseline

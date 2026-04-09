@@ -1,0 +1,84 @@
+name: Deploy Production
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  deploy-frontend:
+    name: Deploy Frontend (Vercel)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: 9 }
+      - run: pnpm install
+      - run: pnpm build
+      - uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: "--prod"
+
+  deploy-api:
+    name: Deploy API (ECS Rolling Update)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Build + push API image
+        run: |
+          docker build -t launchiq-api -f src/infra/docker/api.Dockerfile .
+          docker tag launchiq-api ${{ secrets.ECR_URL }}/launchiq-api:${{ github.ref_name }}
+          docker push ${{ secrets.ECR_URL }}/launchiq-api:${{ github.ref_name }}
+      - name: ECS rolling deploy
+        run: |
+          aws ecs update-service \
+            --cluster launchiq-prod \
+            --service launchiq-api \
+            --force-new-deployment
+
+  deploy-agents:
+    name: Deploy Agents (Lambda Blue/Green)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        agent: [orchestrator, market_intelligence, audience_insight, launch_strategy, content_generation, analytics_feedback]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Deploy ${{ matrix.agent }} Lambda
+        run: |
+          cd src/agents/${{ matrix.agent }}
+          zip -r function.zip .
+          aws lambda update-function-code \
+            --function-name launchiq-${{ matrix.agent }} \
+            --zip-file fileb://function.zip
+          aws lambda publish-version \
+            --function-name launchiq-${{ matrix.agent }}
+
+  smoke-tests:
+    name: Post-Deploy Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [deploy-frontend, deploy-api, deploy-agents]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Health check
+        run: curl -f https://api.launchiq.io/api/v1/health
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: "LaunchIQ ${{ github.ref_name }} deployed to production"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

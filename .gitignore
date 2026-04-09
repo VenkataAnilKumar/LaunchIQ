@@ -1,0 +1,57 @@
+# Environment
+.env
+.env.local
+.env.staging
+.env.production
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Node
+node_modules/
+.next/
+.turbo/
+dist/
+*.tsbuildinfo
+
+# Evals (reports generated at runtime)
+src/evals/reports/*
+!src/evals/reports/.gitkeep
+
+# Infrastructure
+src/infra/aws/cdk.out/
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+logs/
+
+# AWS
+.aws/
+
+# Secrets
+*.pem
+*.key
