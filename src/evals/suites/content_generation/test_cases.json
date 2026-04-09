@@ -1,0 +1,38 @@
+[
+	{
+		"id": "cg_001",
+		"input": {
+			"product_name": "LaunchIQ",
+			"brand_voice": "Direct, insight-driven, and credible",
+			"primary_persona": "Product marketer",
+			"launch_goal": "Book product demo calls"
+		}
+	},
+	{
+		"id": "cg_002",
+		"input": {
+			"product_name": "Tempo",
+			"brand_voice": "Energetic and supportive",
+			"primary_persona": "Busy professional",
+			"launch_goal": "Drive app installs"
+		}
+	},
+	{
+		"id": "cg_003",
+		"input": {
+			"product_name": "ShipMate CLI",
+			"brand_voice": "Technical and practical",
+			"primary_persona": "DevOps engineer",
+			"launch_goal": "Increase free trial signups"
+		}
+	},
+	{
+		"id": "cg_004",
+		"input": {
+			"product_name": "Craftly",
+			"brand_voice": "Warm and story-led",
+			"primary_persona": "Conscious shopper",
+			"launch_goal": "Increase first purchases"
+		}
+	}
+]

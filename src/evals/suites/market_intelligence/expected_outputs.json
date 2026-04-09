@@ -1,0 +1,82 @@
+[
+	{
+		"market_size": "non-empty string",
+		"growth_rate": "non-empty string",
+		"competitors": [
+			{
+				"name": "string",
+				"positioning": "string",
+				"strengths": ["string"],
+				"weaknesses": ["string"]
+			}
+		],
+		"trends": [
+			{
+				"trend": "string",
+				"relevance": "string"
+			}
+		],
+		"white_space": "non-empty string",
+		"recommended_positioning": "non-empty string"
+	},
+	{
+		"market_size": "non-empty string",
+		"growth_rate": "non-empty string",
+		"competitors": [
+			{
+				"name": "string",
+				"positioning": "string",
+				"strengths": ["string"],
+				"weaknesses": ["string"]
+			}
+		],
+		"trends": [
+			{
+				"trend": "string",
+				"relevance": "string"
+			}
+		],
+		"white_space": "non-empty string",
+		"recommended_positioning": "non-empty string"
+	},
+	{
+		"market_size": "non-empty string",
+		"growth_rate": "non-empty string",
+		"competitors": [
+			{
+				"name": "string",
+				"positioning": "string",
+				"strengths": ["string"],
+				"weaknesses": ["string"]
+			}
+		],
+		"trends": [
+			{
+				"trend": "string",
+				"relevance": "string"
+			}
+		],
+		"white_space": "non-empty string",
+		"recommended_positioning": "non-empty string"
+	},
+	{
+		"market_size": "non-empty string",
+		"growth_rate": "non-empty string",
+		"competitors": [
+			{
+				"name": "string",
+				"positioning": "string",
+				"strengths": ["string"],
+				"weaknesses": ["string"]
+			}
+		],
+		"trends": [
+			{
+				"trend": "string",
+				"relevance": "string"
+			}
+		],
+		"white_space": "non-empty string",
+		"recommended_positioning": "non-empty string"
+	}
+]

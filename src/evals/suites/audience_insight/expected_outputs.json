@@ -1,0 +1,82 @@
+[
+	{
+		"primary_persona": {
+			"name": "string",
+			"role": "string",
+			"age_range": "string",
+			"pain_points": ["string", "string"],
+			"goals": ["string", "string"],
+			"channels": ["string"],
+			"message_hook": "string",
+			"willingness_to_pay": "string"
+		},
+		"secondary_personas": [],
+		"icp_summary": "string",
+		"messaging_framework": {
+			"awareness": "string",
+			"consideration": "string",
+			"decision": "string"
+		},
+		"recommended_channels": ["string"]
+	},
+	{
+		"primary_persona": {
+			"name": "string",
+			"role": "string",
+			"age_range": "string",
+			"pain_points": ["string", "string"],
+			"goals": ["string", "string"],
+			"channels": ["string"],
+			"message_hook": "string",
+			"willingness_to_pay": "string"
+		},
+		"secondary_personas": [],
+		"icp_summary": "string",
+		"messaging_framework": {
+			"awareness": "string",
+			"consideration": "string",
+			"decision": "string"
+		},
+		"recommended_channels": ["string"]
+	},
+	{
+		"primary_persona": {
+			"name": "string",
+			"role": "string",
+			"age_range": "string",
+			"pain_points": ["string", "string"],
+			"goals": ["string", "string"],
+			"channels": ["string"],
+			"message_hook": "string",
+			"willingness_to_pay": "string"
+		},
+		"secondary_personas": [],
+		"icp_summary": "string",
+		"messaging_framework": {
+			"awareness": "string",
+			"consideration": "string",
+			"decision": "string"
+		},
+		"recommended_channels": ["string"]
+	},
+	{
+		"primary_persona": {
+			"name": "string",
+			"role": "string",
+			"age_range": "string",
+			"pain_points": ["string", "string"],
+			"goals": ["string", "string"],
+			"channels": ["string"],
+			"message_hook": "string",
+			"willingness_to_pay": "string"
+		},
+		"secondary_personas": [],
+		"icp_summary": "string",
+		"messaging_framework": {
+			"awareness": "string",
+			"consideration": "string",
+			"decision": "string"
+		},
+		"recommended_channels": ["string"]
+	}
+]

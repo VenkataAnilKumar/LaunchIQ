@@ -1,0 +1,70 @@
+[
+	{
+		"positioning_statement": "string",
+		"launch_date_recommendation": "string",
+		"phases": [
+			{
+				"phase": "Pre-Launch",
+				"duration": "string",
+				"goals": ["string"],
+				"tactics": ["string", "string", "string"],
+				"kpis": ["string"]
+			}
+		],
+		"channels": ["string"],
+		"budget_allocation": {"channel": "percentage"},
+		"success_metrics": ["string"],
+		"risks": ["string"]
+	},
+	{
+		"positioning_statement": "string",
+		"launch_date_recommendation": "string",
+		"phases": [
+			{
+				"phase": "Pre-Launch",
+				"duration": "string",
+				"goals": ["string"],
+				"tactics": ["string", "string", "string"],
+				"kpis": ["string"]
+			}
+		],
+		"channels": ["string"],
+		"budget_allocation": {"channel": "percentage"},
+		"success_metrics": ["string"],
+		"risks": ["string"]
+	},
+	{
+		"positioning_statement": "string",
+		"launch_date_recommendation": "string",
+		"phases": [
+			{
+				"phase": "Pre-Launch",
+				"duration": "string",
+				"goals": ["string"],
+				"tactics": ["string", "string", "string"],
+				"kpis": ["string"]
+			}
+		],
+		"channels": ["string"],
+		"budget_allocation": {"channel": "percentage"},
+		"success_metrics": ["string"],
+		"risks": ["string"]
+	},
+	{
+		"positioning_statement": "string",
+		"launch_date_recommendation": "string",
+		"phases": [
+			{
+				"phase": "Pre-Launch",
+				"duration": "string",
+				"goals": ["string"],
+				"tactics": ["string", "string", "string"],
+				"kpis": ["string"]
+			}
+		],
+		"channels": ["string"],
+		"budget_allocation": {"channel": "percentage"},
+		"success_metrics": ["string"],
+		"risks": ["string"]
+	}
+]

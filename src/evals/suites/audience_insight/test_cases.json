@@ -1,0 +1,38 @@
+[
+	{
+		"id": "ai_001",
+		"input": {
+			"product_name": "LaunchIQ",
+			"description": "AI-assisted launch planning workspace",
+			"target_market": "Seed to Series B SaaS teams",
+			"positioning": "Faster launch planning with aligned GTM execution"
+		}
+	},
+	{
+		"id": "ai_002",
+		"input": {
+			"product_name": "Tempo",
+			"description": "Adaptive workout app for busy professionals",
+			"target_market": "Time-constrained adults 25-45",
+			"positioning": "Personalized fitness without gym scheduling friction"
+		}
+	},
+	{
+		"id": "ai_003",
+		"input": {
+			"product_name": "ShipMate CLI",
+			"description": "Release automation toolkit for dev teams",
+			"target_market": "Platform engineers and developer experience teams",
+			"positioning": "Reliable releases with less manual overhead"
+		}
+	},
+	{
+		"id": "ai_004",
+		"input": {
+			"product_name": "Craftly",
+			"description": "Artisan marketplace for ethically sourced goods",
+			"target_market": "Values-driven online shoppers",
+			"positioning": "Unique handcrafted products with trustworthy seller stories"
+		}
+	}
+]

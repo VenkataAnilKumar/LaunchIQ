@@ -1,0 +1,38 @@
+[
+	{
+		"id": "ls_001",
+		"input": {
+			"product_name": "LaunchIQ",
+			"market_data": {"market_size": "$4.2B", "growth_rate": "18%"},
+			"personas": ["Founder", "Product Marketer"],
+			"timeline_weeks": 8
+		}
+	},
+	{
+		"id": "ls_002",
+		"input": {
+			"product_name": "Tempo",
+			"market_data": {"market_size": "$9.1B", "growth_rate": "14%"},
+			"personas": ["Fitness Beginner", "Busy Parent"],
+			"timeline_weeks": 6
+		}
+	},
+	{
+		"id": "ls_003",
+		"input": {
+			"product_name": "ShipMate CLI",
+			"market_data": {"market_size": "$2.3B", "growth_rate": "21%"},
+			"personas": ["Platform Engineer", "CTO"],
+			"timeline_weeks": 10
+		}
+	},
+	{
+		"id": "ls_004",
+		"input": {
+			"product_name": "Craftly",
+			"market_data": {"market_size": "$6.7B", "growth_rate": "11%"},
+			"personas": ["Maker", "Conscious Shopper"],
+			"timeline_weeks": 12
+		}
+	}
+]

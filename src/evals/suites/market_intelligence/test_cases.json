@@ -1,0 +1,38 @@
+[
+	{
+		"id": "mi_001",
+		"input": {
+			"product_name": "LaunchIQ",
+			"description": "AI-powered product launch intelligence platform",
+			"target_market": "B2B SaaS founders and product marketers",
+			"competitors": ["ProductBoard", "LaunchDarkly", "Wynter"]
+		}
+	},
+	{
+		"id": "mi_002",
+		"input": {
+			"product_name": "Tempo",
+			"description": "Consumer fitness app with adaptive training plans",
+			"target_market": "Health-conscious mobile users",
+			"competitors": ["Nike Run Club", "Strava", "Centr"]
+		}
+	},
+	{
+		"id": "mi_003",
+		"input": {
+			"product_name": "ShipMate CLI",
+			"description": "Developer tool for release automation and changelog generation",
+			"target_market": "Engineering teams and DevOps leads",
+			"competitors": ["semantic-release", "release-please", "Changesets"]
+		}
+	},
+	{
+		"id": "mi_004",
+		"input": {
+			"product_name": "Craftly",
+			"description": "Marketplace connecting local artisans with urban buyers",
+			"target_market": "Independent sellers and ethical shoppers",
+			"competitors": ["Etsy", "Faire", "Amazon Handmade"]
+		}
+	}
+]

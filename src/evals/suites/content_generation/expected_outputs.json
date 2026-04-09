@@ -1,0 +1,134 @@
+[
+	{
+		"email_sequence": [
+			{
+				"format": "email",
+				"variant": "a",
+				"headline": "string",
+				"body": "string",
+				"cta": "string",
+				"target_persona": "string"
+			}
+		],
+		"social_posts": [
+			{
+				"format": "linkedin",
+				"variant": "a",
+				"headline": "string",
+				"body": "string",
+				"cta": "string",
+				"target_persona": "string"
+			}
+		],
+		"ad_copy": [
+			{
+				"format": "ad_copy",
+				"variant": "a",
+				"headline": "string",
+				"body": "string",
+				"cta": "string",
+				"target_persona": "string"
+			}
+		],
+		"brand_voice_notes": "string"
+	},
+	{
+		"email_sequence": [
+			{
+				"format": "email",
+				"variant": "a",
+				"headline": "string",
+				"body": "string",
+				"cta": "string",
+				"target_persona": "string"
+			}
+		],
+		"social_posts": [
+			{
+				"format": "linkedin",
+				"variant": "a",
+				"headline": "string",
+				"body": "string",
+				"cta": "string",
+				"target_persona": "string"
+			}
+		],
+		"ad_copy": [
+			{
+				"format": "ad_copy",
+				"variant": "a",
+				"headline": "string",
+				"body": "string",
+				"cta": "string",
+				"target_persona": "string"
+			}
+		],
+		"brand_voice_notes": "string"
+	},
+	{
+		"email_sequence": [
+			{
+				"format": "email",
+				"variant": "a",
+				"headline": "string",
+				"body": "string",
+				"cta": "string",
+				"target_persona": "string"
+			}
+		],
+		"social_posts": [
+			{
+				"format": "linkedin",
+				"variant": "a",
+				"headline": "string",
+				"body": "string",
+				"cta": "string",
+				"target_persona": "string"
+			}
+		],
+		"ad_copy": [
+			{
+				"format": "ad_copy",
+				"variant": "a",
+				"headline": "string",
+				"body": "string",
+				"cta": "string",
+				"target_persona": "string"
+			}
+		],
+		"brand_voice_notes": "string"
+	},
+	{
+		"email_sequence": [
+			{
+				"format": "email",
+				"variant": "a",
+				"headline": "string",
+				"body": "string",
+				"cta": "string",
+				"target_persona": "string"
+			}
+		],
+		"social_posts": [
+			{
+				"format": "linkedin",
+				"variant": "a",
+				"headline": "string",
+				"body": "string",
+				"cta": "string",
+				"target_persona": "string"
+			}
+		],
+		"ad_copy": [
+			{
+				"format": "ad_copy",
+				"variant": "a",
+				"headline": "string",
+				"body": "string",
+				"cta": "string",
+				"target_persona": "string"
+			}
+		],
+		"brand_voice_notes": "string"
+	}
+]

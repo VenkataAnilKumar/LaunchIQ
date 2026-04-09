@@ -107,7 +107,6 @@ class BaseAgent(abc.ABC):
                 "budget_tokens": self.config.thinking_budget,
             }
             params["temperature"] = 1.0
-        params["_max_iterations"] = self.loop.config.max_iterations
         return params
 
     async def _call_with_tools(
@@ -122,6 +121,7 @@ class BaseAgent(abc.ABC):
         from .cognitive_loop import run_tool_loop
 
         params = self._make_api_params(messages)
+        params["_max_iterations"] = self.loop.config.max_iterations
         return await run_tool_loop(self.client, params, tool_executor)
 
     def _validate_output(self, raw: dict[str, Any]) -> dict[str, Any]:

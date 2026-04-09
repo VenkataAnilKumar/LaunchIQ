@@ -1,0 +1,22 @@
+{
+  "market_intelligence": {
+    "relevance_score": 0.82,
+    "hallucination_rate": 0.0,
+    "schema_compliance": 1.0
+  },
+  "audience_insight": {
+    "relevance_score": 0.8,
+    "hallucination_rate": 0.0,
+    "schema_compliance": 1.0
+  },
+  "launch_strategy": {
+    "relevance_score": 0.85,
+    "hallucination_rate": 0.0,
+    "schema_compliance": 1.0
+  },
+  "content_generation": {
+    "relevance_score": 0.78,
+    "hallucination_rate": 0.0,
+    "schema_compliance": 1.0
+  }
+}
