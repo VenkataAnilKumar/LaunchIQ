@@ -1,0 +1,63 @@
+{
+  "market_size": "$4.2B product management and GTM intelligence category with 18% YoY growth",
+  "growth_rate": "18% YoY driven by AI-assisted planning and lean GTM team adoption",
+  "competitors": [
+    {
+      "name": "ProductBoard",
+      "positioning": "Product management suite for roadmapping and customer insight capture",
+      "strengths": ["Established enterprise footprint", "Mature integrations", "Strong product planning workflows"],
+      "weaknesses": ["Long onboarding time", "Higher pricing for smaller teams", "Less launch-specific orchestration"],
+      "pricing": "Mid-to-high tier subscription"
+    },
+    {
+      "name": "Wynter",
+      "positioning": "Message testing platform for B2B marketing teams",
+      "strengths": ["Strong message validation", "Specialized B2B panel feedback", "Fast positioning feedback cycles"],
+      "weaknesses": ["Limited end-to-end execution", "Narrow scope outside messaging", "Manual handoff to campaign tooling"],
+      "pricing": "Usage and panel-based pricing"
+    },
+    {
+      "name": "GoPhrase",
+      "positioning": "AI writing and content operations platform for marketing teams",
+      "strengths": ["Content workflow support", "Brand consistency helpers", "Team collaboration features"],
+      "weaknesses": ["Not optimized for launch strategy", "Limited market intelligence depth", "Requires separate planning stack"],
+      "pricing": "Seat-based SaaS pricing"
+    },
+    {
+      "name": "FullStory",
+      "positioning": "Behavior analytics platform focused on product and UX insights",
+      "strengths": ["Rich behavior analytics", "Strong enterprise trust", "Deep session analysis"],
+      "weaknesses": ["Not a launch execution platform", "High implementation overhead", "Insights require downstream planning tools"],
+      "pricing": "Enterprise-oriented pricing"
+    }
+  ],
+  "trends": [
+    {
+      "trend": "AI copilots becoming standard in GTM planning",
+      "relevance": "Buyers now expect AI-assisted strategy generation and tactical recommendations",
+      "source": "Synthetic demo dataset (2026)"
+    },
+    {
+      "trend": "Smaller teams owning full launch lifecycle",
+      "relevance": "Founders and PMMs need integrated systems that reduce manual coordination",
+      "source": "Synthetic demo dataset (2026)"
+    },
+    {
+      "trend": "Demand for faster launch experimentation loops",
+      "relevance": "Teams prioritize rapid validation and iteration over long planning cycles",
+      "source": "Synthetic demo dataset (2026)"
+    },
+    {
+      "trend": "Budget pressure increasing tooling consolidation",
+      "relevance": "Platforms combining research, strategy, and content have stronger ROI narratives",
+      "source": "Synthetic demo dataset (2026)"
+    },
+    {
+      "trend": "Human-in-the-loop governance for AI outputs",
+      "relevance": "Approval checkpoints are becoming a trust requirement for strategic AI workflows",
+      "source": "Synthetic demo dataset (2026)"
+    }
+  ],
+  "white_space": "A single workflow that links market insight, persona design, strategy, and launch content with explicit HITL controls",
+  "recommended_positioning": "LaunchIQ is the fastest way for lean SaaS teams to go from product brief to execution-ready launch assets"
+}

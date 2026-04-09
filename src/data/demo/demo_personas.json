@@ -1,0 +1,43 @@
+{
+  "primary_persona": {
+    "name": "Sarah Chen",
+    "role": "Series A SaaS Founder",
+    "age_range": "32-40",
+    "pain_points": [
+      "Launch planning is fragmented across docs and tools",
+      "Small team cannot afford long GTM prep cycles"
+    ],
+    "goals": [
+      "Ship product launches in under two weeks",
+      "Increase confidence in positioning before release"
+    ],
+    "channels": ["LinkedIn", "Founder communities", "Email"],
+    "message_hook": "Go from launch idea to execution-ready plan in one guided workflow.",
+    "willingness_to_pay": "High if measurable speed and conversion gains are clear"
+  },
+  "secondary_personas": [
+    {
+      "name": "Marcus Rivera",
+      "role": "Product Marketer at a 50-person startup",
+      "age_range": "28-35",
+      "pain_points": [
+        "Needs both speed and quality under tight deadlines",
+        "Manual competitor and persona research slows launch cycles"
+      ],
+      "goals": [
+        "Deliver consistent launch narratives across channels",
+        "Cut planning overhead while improving campaign outcomes"
+      ],
+      "channels": ["LinkedIn", "Slack communities", "Webinars"],
+      "message_hook": "Create launch strategy and campaign copy without sacrificing quality.",
+      "willingness_to_pay": "Medium to high for workflow automation that improves output quality"
+    }
+  ],
+  "icp_summary": "Early-stage to growth-stage SaaS teams with lean GTM functions and frequent launch cadence",
+  "messaging_framework": {
+    "awareness": "Launch prep is too slow and disconnected",
+    "consideration": "LaunchIQ unifies research, personas, strategy, and content",
+    "decision": "HITL checkpoints and measurable speed gains reduce launch risk"
+  },
+  "recommended_channels": ["LinkedIn", "Lifecycle email", "Partner communities"]
+}

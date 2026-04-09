@@ -240,6 +240,26 @@ Core product documents are organized in [`/docs`](./docs):
 
 ---
 
+## Vercel Deployment
+
+Frontend deployment is wired to Vercel in GitHub Actions:
+
+- `deploy-staging.yml`: deploys Vercel preview on push to `dev`
+- `deploy-production.yml`: deploys Vercel production on semver tags
+
+Required GitHub repository secrets:
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
+Optional Vercel project environment variables:
+
+- `NEXT_PUBLIC_API_URL`
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+
+---
+
 ## Roadmap
 
 **Phase 1 — Core Intelligence Engine** *(Completed)*

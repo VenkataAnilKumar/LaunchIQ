@@ -1,0 +1,10 @@
+{
+	"framework": "nextjs",
+	"buildCommand": "pnpm build",
+	"outputDirectory": ".next",
+	"installCommand": "pnpm install",
+	"env": {
+		"NEXT_PUBLIC_API_URL": "@api-url",
+		"NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "@clerk-key"
+	}
+}

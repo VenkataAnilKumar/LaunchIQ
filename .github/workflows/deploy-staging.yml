@@ -1,0 +1,70 @@
+name: Deploy Staging
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  deploy-frontend:
+    name: Deploy Frontend (Vercel Preview)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @launchiq/web build
+      - uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: "--confirm"
+
+  deploy-api:
+    name: Deploy API (ECS Staging)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Build + push staging API image
+        run: |
+          docker build -t launchiq-api -f src/infra/docker/api.Dockerfile .
+          docker tag launchiq-api ${{ secrets.ECR_URL }}/launchiq-api:staging
+          docker push ${{ secrets.ECR_URL }}/launchiq-api:staging
+      - name: ECS staging deploy
+        run: |
+          aws ecs update-service \
+            --cluster launchiq-staging \
+            --service launchiq-api \
+            --force-new-deployment
+
+  deploy-agents:
+    name: Deploy Agents (Staging)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        agent: [orchestrator, market_intelligence, audience_insight, launch_strategy, content_generation, analytics_feedback]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Deploy ${{ matrix.agent }} Lambda (staging)
+        run: |
+          cd src/agents/${{ matrix.agent }}
+          zip -r function.zip .
+          aws lambda update-function-code \
+            --function-name launchiq-${{ matrix.agent }} \
+            --zip-file fileb://function.zip

@@ -1,0 +1,13 @@
+{
+  "product_name": "LaunchIQ",
+  "description": "AI-powered product launch intelligence platform that analyzes your market, builds buyer personas, creates a launch strategy, and generates launch content in under 10 minutes using a multi-agent AI pipeline.",
+  "target_market": "B2B SaaS founders, product managers, and growth marketers at early-stage startups (Seed to Series A)",
+  "competitors": [
+    "ProductBoard",
+    "Wynter",
+    "GoPhrase",
+    "Speeko",
+    "FullStory"
+  ],
+  "launch_date": "2026-06-01"
+}
