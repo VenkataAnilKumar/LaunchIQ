@@ -16,7 +16,7 @@ LaunchIQ is a solo-founder project conceived, designed, and built by **Venkata A
 
 **Sole Contributor — AI Engineer & Product Builder**
 
-Every aspect of LaunchIQ — from product vision to architecture to implementation — is my work. This project demonstrates not just technical ability, but the full-stack thinking required to take an AI-native product from zero to demo-ready.
+Every aspect of LaunchIQ — from product vision to architecture to implementation — is my work. This project demonstrates not just technical ability, but the full-stack thinking required to take an AI-native product from zero to demo-ready across 10 structured build phases.
 
 ---
 
@@ -29,13 +29,14 @@ This section is important: AI tools helped me move faster, but every architectur
 | Product Vision | Defined the problem, user personas, and value proposition from scratch | — |
 | Architecture Design | Designed the full multi-agent system: 6 agents, memory layers, tool registry, HITL workflow | Claude as a sounding board for trade-off analysis |
 | Agent Engineering | Designed each agent's capability, prompt strategy, tool use, memory scope, and eval criteria | Claude API for agent execution |
-| Tech Stack Decisions | Selected and justified every technology choice (FastAPI, Next.js, Qdrant, Supabase, etc.) | — |
+| Tech Stack Decisions | Selected and justified every technology choice (FastAPI, Next.js, Qdrant, etc.) | — |
 | Prompt Engineering | Wrote and iterated system prompts for each of the 6 agents, including output schemas | Claude for iteration, judgment mine |
-| Backend Development | Built FastAPI API, Celery task queue, agent orchestration layer, MCP tool integrations | Copilot for boilerplate, architecture and logic mine |
-| Frontend Development | Built Next.js 15 UI with SSE streaming for real-time agent output | shadcn/ui components, layout and UX decisions mine |
+| Backend Development | Built FastAPI API, Celery task queue, agent orchestration layer, MCP tool integrations, Alembic migrations | Copilot for boilerplate, architecture and logic mine |
+| Frontend Development | Built Next.js 15 UI with SSE streaming, React 19 Server Components, Tailwind v4 | shadcn/ui components, layout and UX decisions mine |
 | Data Architecture | Designed PostgreSQL schema, Qdrant namespace strategy, Redis session design | — |
 | Security Design | Designed RBAC, RLS policies, OWASP mitigations, AI-specific threat model | — |
-| Product Documentation | Wrote all 16 product documents covering PRD, research, architecture, GTM, and more | Structured the content; wrote the product thinking |
+| Eval Framework | Built per-agent eval suites (relevance, hallucination, schema compliance, edit rate), CI gate | — |
+| Product Documentation | Wrote all 22+ product documents covering PRD, research, architecture, GTM, and more | Structured the content; wrote the product thinking |
 | GTM Strategy | Defined positioning, personas, pricing, channels, and launch phases | — |
 
 ---
@@ -57,6 +58,9 @@ Self-hostable, open-source, and more cost-effective at early stage. Pinecone's m
 ### 5. FastAPI over Node.js/Express for Backend
 AI tooling is Python-native. Running agents in the same language as the backend eliminates a cross-language interface, reduces latency, and simplifies the agent execution model.
 
+### 6. Eval Gate in CI
+Built an eval regression gate into GitHub Actions so every PR that touches agent prompts or logic must pass a quality baseline. Agent quality is invisible without structured evals — I built this from Phase 1.
+
 ---
 
 ## What I Learned Building LaunchIQ
@@ -64,7 +68,7 @@ AI tooling is Python-native. Running agents in the same language as the backend 
 ### Technical Learnings
 1. **Agent memory design is the hardest problem** — deciding what to put in short-term (Redis) vs. long-term (Qdrant) vs. structured (PostgreSQL) requires careful thought about retrieval patterns and latency requirements.
 
-2. **Streaming agent output to UI requires architectural thought** — SSE from FastAPI through Celery to the browser needs careful backpressure handling. Learned to use task IDs as stream anchors.
+2. **Streaming agent output to UI requires architectural thought** — SSE from FastAPI through Celery to the browser needs careful backpressure handling. Solved with Redis pub/sub as the bridge.
 
 3. **HITL introduces async complexity** — the agent pipeline needs to pause, wait for a user action (which could be minutes or hours later), and resume. Redis-based workflow state solved this cleanly.
 
@@ -101,8 +105,9 @@ AI tooling is Python-native. Running agents in the same language as the backend 
 | Full Stack Development | Next.js 15 + FastAPI + PostgreSQL + Redis + Qdrant — end to end |
 | Technical Judgment | Every tech stack decision documented with rationale and trade-offs |
 | Security Awareness | OWASP coverage, AI-specific threat model, GDPR compliance design |
-| Communication | 16 product documents covering every dimension of the product |
-| Initiative | Solo-built from idea to demo-ready while unemployed — no team, no funding |
+| Eval Engineering | Per-agent quality suites with CI regression gate — not just vibes testing |
+| Communication | 22+ product documents covering every dimension of the product |
+| Initiative | Solo-built from idea to production-ready while unemployed — no team, no funding |
 
 ---
 
@@ -111,7 +116,6 @@ AI tooling is Python-native. Running agents in the same language as the backend 
 **Venkata Anil Kumar**
 AI Engineer | Open to full-time roles in AI engineering, product engineering, or founding team positions
 
-- GitHub: github.com/[username]
-- LinkedIn: linkedin.com/in/[username]
-- Email: [email]
-- Demo: [launchiq demo link]
+- GitHub: [github.com/venkataanilkumar](https://github.com/venkataanilkumar)
+- LinkedIn: [linkedin.com/in/venkataanilkumar](https://linkedin.com/in/venkataanilkumar)
+- Email: vanilkumarch@gmail.com

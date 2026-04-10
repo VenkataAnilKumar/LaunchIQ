@@ -60,7 +60,7 @@ In LaunchIQ, **Human-in-the-Loop (HITL) checkpoints are structural workflow step
 
 This wasn't just a UX decision — it required careful async architecture:
 - Agent state stored in Redis with workflow status flags
-- WebSocket connection maintained through agent pause periods
+- SSE connection maintained through agent pause periods via Redis pub/sub
 - Approval events trigger pipeline resume via Celery task signals
 
 The result: users feel in control of an AI that's doing real work for them, not just generating text they have to validate from scratch.
@@ -76,6 +76,15 @@ Final memory architecture:
 
 The key insight: agents don't pass data to each other directly. They write to shared persistent stores, and each downstream agent reads what it needs. This decouples agents and makes the system resilient to individual agent failures.
 
+### The Eval Framework
+
+I built agent quality measurement from the start — not as an afterthought:
+- **Per-agent eval suites** — relevance, hallucination rate, schema compliance, edit rate
+- **Langfuse integration** — every agent run produces a trace with scores
+- **CI regression gate** — PRs that touch agent prompts must pass a quality baseline to merge
+
+This is what makes LaunchIQ trustworthy at scale. Gut instinct about agent quality doesn't survive production.
+
 ---
 
 ## The Challenges I Navigated
@@ -89,9 +98,8 @@ Getting Claude to reliably output parseable JSON schemas for each agent's output
 Real-time agent output (users watching the market brief populate live) required:
 - FastAPI async generator streaming to Celery worker
 - SSE (Server-Sent Events) from backend to Next.js frontend
+- Redis pub/sub as the bridge between Celery workers and SSE endpoints
 - React 19 concurrent rendering for smooth streaming UI
-
-The challenge was maintaining the SSE connection while Celery workers ran in separate processes. Solved with Redis pub/sub as the bridge between Celery and the SSE endpoint.
 
 ### Challenge 3: Prompt Engineering for Context Handoff
 
@@ -101,7 +109,7 @@ Each agent needs context from previous agents without exceeding token limits. Th
 
 With no team, I had to decide what to build and what to defer. My prioritization framework:
 - Build only what validates the core hypothesis: *"Can agents deliver a better launch brief than manual research in < 10 minutes?"*
-- Defer everything that doesn't answer that question (integrations, collaboration, mobile)
+- Defer everything that doesn't answer that question (collaboration, mobile)
 - Build observability (LangSmith traces, Langfuse evals) from day one — agent quality is invisible without it
 
 ---
@@ -127,7 +135,7 @@ LaunchIQ's value isn't in clever prompts — it's in the architectural decisions
 Building LaunchIQ required PRDs, user research, competitive analysis, GTM strategy, security design, and onboarding design — not just agent engineering.
 
 **3. I move fast without cutting corners on quality.**
-12 weeks. Solo. 6 agents. 16 product documents. Working demo. Security design. GDPR-aware. This is how I approach any engineering challenge.
+12 weeks. Solo. 6 agents. 22+ product documents. Working demo. Security design. GDPR-aware. Eval framework with CI gate. This is how I approach any engineering challenge.
 
 **4. I've already solved the hardest AI engineering problems you're hiring for.**
 Async agent orchestration. Memory architecture. Structured output reliability. Streaming UI. HITL workflows. Agent evaluation. If these are on your roadmap, I've already built them.
@@ -136,14 +144,15 @@ Async agent orchestration. Memory architecture. Structured output reliability. S
 
 ## What's Next for LaunchIQ
 
-- Content Generation Agent (complete)
-- Analytics & Feedback Agent (complete)
-- HubSpot + Slack integrations (Phase 2)
-- Public beta launch on Product Hunt
-- 10 paying customers by Month 3
+- Public deployment (Vercel + AWS ECS) — in progress
+- Beta launch — 10 users, collecting HITL decision data
+- Stripe payments (Starter $99/mo, Pro $299/mo)
+- Cross-session memory learning loop (long-term agent improvement)
+- Team collaboration (multi-user launches)
 
 ---
 
 *Venkata Anil Kumar — AI Engineer*
 *Building the future of intelligent product launches.*
 *Open to full-time roles where I can bring this level of depth to your product.*
+*vanilkumarch@gmail.com | linkedin.com/in/venkataanilkumar*

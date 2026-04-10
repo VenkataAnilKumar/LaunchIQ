@@ -44,16 +44,16 @@ Human-in-the-loop checkpoints at every stage — AI does the work, human approve
 | Agent SDK | Claude Agent SDK (Anthropic) |
 | Tool Protocol | MCP (Model Context Protocol) |
 | Backend | FastAPI, Python 3.12, Celery, Redis |
-| Frontend | Next.js 15, React 19, Tailwind CSS |
-| Database | PostgreSQL (Supabase), Qdrant (vectors) |
-| Observability | LangSmith, Langfuse, Sentry, PostHog |
-| Infrastructure | Vercel, AWS Lambda |
+| Frontend | Next.js 15, React 19, Tailwind CSS v4 |
+| Database | PostgreSQL, Qdrant (vectors) |
+| Observability | LangSmith, Langfuse, Sentry |
+| Infrastructure | Vercel, AWS Lambda, AWS ECS |
 
 ---
 
 ## My Role
 
-**Sole contributor** — Product vision, system architecture, agent engineering, full-stack development, prompt engineering, security design, and GTM strategy. Built entirely while self-directed.
+**Sole contributor** — Product vision, system architecture, agent engineering, full-stack development, prompt engineering, security design, and GTM strategy. Built entirely while self-directed across 10 phases.
 
 ---
 
@@ -62,8 +62,9 @@ Human-in-the-loop checkpoints at every stage — AI does the work, human approve
 - First launch brief delivered in **< 10 minutes**
 - **6 specialized agents** collaborating via A2A protocol
 - **5 external tools** integrated via MCP servers
-- **16 product documents** covering every dimension of the platform
+- **22+ product documents** covering every dimension of the platform
 - End-to-end: research → strategy → content → execution tracker
+- **Eval baseline gate passing** — per-agent quality locked in CI
 
 ---
 
@@ -81,12 +82,12 @@ Human-in-the-loop checkpoints at every stage — AI does the work, human approve
 
 ## Links
 
-- GitHub: [github.com/username/launchiq]
-- Live Demo: [launchiq demo URL]
+- GitHub: [github.com/venkataanilkumar/launchiq](https://github.com/venkataanilkumar/launchiq)
 - Full Documentation: `/docs/` folder in repository
-- Demo Video: [YouTube / Loom link]
+- Email: vanilkumarch@gmail.com
+- LinkedIn: [linkedin.com/in/venkataanilkumar](https://linkedin.com/in/venkataanilkumar)
 
 ---
 
 *Venkata Anil Kumar — AI Engineer | Open to full-time roles*
-*Email: [email] | LinkedIn: [linkedin URL]*
+*vanilkumarch@gmail.com | linkedin.com/in/venkataanilkumar*

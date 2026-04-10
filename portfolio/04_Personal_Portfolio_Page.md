@@ -17,7 +17,7 @@
   I build AI-native products — from multi-agent systems
   and RAG pipelines to full-stack SaaS applications.
 
-  Currently: Building LaunchIQ, an agentic AI platform
+  Currently: Built LaunchIQ, an agentic AI platform
   for product launches. Open to full-time roles.
 
   [View Projects]   [Download Resume]   [LinkedIn]   [GitHub]
@@ -79,14 +79,21 @@
   │  connected via Model Context Protocol   │
   └─────────────────────────────────────────┘
 
+  ┌─────────────────────────────────────────┐
+  │  Eval Framework + CI Gate               │
+  │  Per-agent quality suites               │
+  │  Langfuse traces · regression gate      │
+  └─────────────────────────────────────────┘
+
   ─────────────────────────────────────────
 
   Tech Stack
   Claude Opus 4.6 · Sonnet 4.6 · Haiku 4.5
   Claude Agent SDK · MCP Servers
-  FastAPI · Next.js 15 · PostgreSQL · Qdrant · Redis
-  LangSmith · Langfuse · Sentry · PostHog
-  Vercel · AWS Lambda
+  FastAPI · Next.js 15 · React 19 · Tailwind v4
+  PostgreSQL · Qdrant · Redis
+  Langfuse · Sentry · LangSmith
+  Vercel · AWS Lambda · AWS ECS
 
   ─────────────────────────────────────────
 
@@ -94,7 +101,7 @@
   < 10 min    First launch brief delivered
   92%         Agent task completion rate
   47 NPS      Pilot user satisfaction
-  16 docs     Complete product documentation
+  22+ docs    Complete product documentation
 
   [View GitHub]   [Read Case Study]   [Watch Demo]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -151,28 +158,30 @@
   SKILLS & EXPERTISE
 
   AI Engineering
-  ├── Multi-agent system design (Claude Agent SDK, LangGraph)
-  ├── RAG pipeline architecture (Qdrant, Pinecone, pgvector)
-  ├── Prompt engineering & structured output
-  ├── LLM evaluation (LangSmith, Langfuse)
+  ├── Multi-agent system design (Claude Agent SDK)
+  ├── RAG pipeline architecture (Qdrant, pgvector)
+  ├── Prompt engineering & structured output (Pydantic)
+  ├── LLM evaluation (Langfuse, LangSmith, custom evals)
   ├── MCP (Model Context Protocol) tool integration
+  ├── Extended Thinking (Opus 4.6 budget_tokens)
   └── Human-in-the-loop workflow design
 
   Backend Engineering
   ├── FastAPI · Python 3.12 · Celery · Redis
-  ├── PostgreSQL · Supabase · SQLAlchemy
-  ├── REST APIs · WebSockets · Server-Sent Events
-  └── AWS Lambda · Docker · GitHub Actions
+  ├── PostgreSQL · SQLAlchemy 2.x · Alembic
+  ├── REST APIs · Server-Sent Events · async/await
+  └── AWS Lambda · AWS ECS · Docker · GitHub Actions
 
   Frontend Engineering
   ├── Next.js 15 · React 19 · TypeScript
-  ├── Tailwind CSS · shadcn/ui
+  ├── Tailwind CSS v4 · shadcn/ui · Radix UI
+  ├── Zustand v5 · TanStack Query v5
   └── Real-time streaming UI · Clerk auth
 
   Product & Architecture
-  ├── System architecture design
+  ├── System architecture design (multi-agent, memory)
   ├── Product requirements documentation
-  ├── Security design (OWASP, GDPR, AI-specific threats)
+  ├── Security design (OWASP, GDPR, AI threat model)
   └── Go-to-market strategy
 
   Models & Platforms
@@ -229,10 +238,9 @@
   ✓  Advisory / technical co-founder conversations
 
   Best way to reach me:
-  Email:    [your email]
-  LinkedIn: linkedin.com/in/[username]
-  GitHub:   github.com/[username]
-  Twitter:  @[username]
+  Email:    vanilkumarch@gmail.com
+  LinkedIn: linkedin.com/in/venkataanilkumar
+  GitHub:   github.com/venkataanilkumar
 
   [Send a Message →]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -251,10 +259,10 @@
 ```html
 <title>Venkata Anil Kumar — AI Engineer</title>
 <meta name="description" content="AI Engineer specializing in multi-agent systems,
-RAG pipelines, and full-stack AI products. Building LaunchIQ.">
+RAG pipelines, and full-stack AI products. Built LaunchIQ — agentic AI for product launches.">
 <meta property="og:title" content="Venkata Anil Kumar — AI Engineer" />
 <meta property="og:description" content="Building AI-native products that solve real
-problems. Currently: LaunchIQ — AI-powered launch intelligence." />
+problems. LaunchIQ — AI-powered launch intelligence — ships in 10 minutes." />
 ```
 
 ### Domain Suggestion

@@ -114,6 +114,7 @@ Outcome: Faster, smarter, more confident launches
 - HITL + observability loop = continuous improvement data competitors don't have
 - Multi-agent architecture harder to replicate than single LLM wrapper
 - Customer data lock-in (launch history, personas, performance)
+- Eval regression gate = quality compounds over time
 
 ---
 
@@ -160,8 +161,9 @@ Outcome: Faster, smarter, more confident launches
 **What this demonstrates:**
 - ✅ **Product vision** — Identified underserved market, scoped MVP
 - ✅ **Architecture** — Designed multi-agent system from first principles
-- ✅ **Full-stack execution** — FastAPI backend + Next.js frontend, no gaps
+- ✅ **Full-stack execution** — FastAPI backend + Next.js 15 frontend, no gaps
 - ✅ **AI engineering** — Prompt engineering, agent orchestration, streaming UX
+- ✅ **Eval engineering** — Per-agent quality suites + CI regression gate
 - ✅ **Business thinking** — GTM strategy, pricing, competitive positioning
 - ✅ **Shipping discipline** — 10 phases, test coverage, CI/CD, eval framework
 
@@ -193,11 +195,12 @@ Outcome: Faster, smarter, more confident launches
 ## TRACTION & VALIDATION
 
 ### Built, Not Hypothetical
-- ✅ **Product MVP** — Fully functioning, deployed, demoed
-- ✅ **Technical validation** — 4-agent pipeline tested, streaming works, HITL reliable
+- ✅ **Product MVP** — Fully functioning, 10 phases complete, production-ready
+- ✅ **Technical validation** — 6-agent pipeline tested, streaming works, HITL reliable
 - ✅ **Code quality** — 0 TypeScript errors, 92% test coverage, eval baseline passing
 - ✅ **Infrastructure ready** — AWS CDK for scale, CI/CD automated, Vercel for frontend
-- ✅ **16 product docs** — PRD, GTM, architecture, security, research
+- ✅ **22+ product docs** — PRD, GTM, architecture, security, research, agent design
+- ✅ **Eval framework** — Per-agent quality suites with Langfuse integration + CI gate
 
 ### What's Next (No Blockers)
 - Week 1–2: GitHub secrets setup (API keys)
@@ -238,10 +241,11 @@ LaunchIQ solves a real problem for a large market (8B+) at a moment when multi-a
 | | ESLint pass rate | 100% |
 | | Test coverage | 92% |
 | | Eval baseline gate | ✅ Passing |
-| **Product** | Time-to-brief | 2–3 min |
+| **Product** | Time-to-brief | 2–3 min demo |
 | | Agents per launch | 6 |
 | | HITL checkpoints | 2+ |
 | | Content formats | 3 (email/social/ads) |
+| | Integrations shipped | 3 (HubSpot/Slack/GA4) |
 | **Infrastructure** | Deploy time | <5 min |
 | | API latency (p50) | <500ms |
 | | Uptime (test) | 100% |
@@ -253,4 +257,5 @@ LaunchIQ solves a real problem for a large market (8B+) at a moment when multi-a
 
 ---
 
-**For questions, demos, or investor pitch:** Contact Venkata Anil Kumar
+**Contact:**  
+Venkata Anil Kumar — vanilkumarch@gmail.com | linkedin.com/in/venkataanilkumar

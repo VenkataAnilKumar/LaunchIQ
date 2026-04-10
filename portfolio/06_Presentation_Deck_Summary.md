@@ -37,11 +37,11 @@ No learning loop                   Real-time optimization
         │ Orchestrator Agent  │
         │   (Claude Opus)     │
         └──────────┬──────────┘
-        │          │          │          │
-   ┌────▼──┐  ┌────▼──┐  ┌────▼──┐  ┌────▼──┐
-   │Market │  │Audience│ │Launch │  │Content│
-   │Intel  │  │Insight │ │Strat  │  │Gen    │
-   └───────┘  └───────┘  └───────┘  └───────┘
+   │          │          │          │          │
+┌──▼──┐  ┌────▼──┐  ┌────▼──┐  ┌────▼──┐  ┌──▼──────┐
+│Mkt  │  │Audinc │  │Launch │  │Contnt │  │Analytic │
+│Intel│  │Insight│  │Strat  │  │Gen    │  │Feedback │
+└─────┘  └───────┘  └───────┘  └───────┘  └─────────┘
         │          │          │          │
         └──────────┬──────────┘
                    │
@@ -63,7 +63,7 @@ No learning loop                   Real-time optimization
 **Key talking points:**
 - 6 AI agents, each specialized for one domain
 - Human approval at every stage (trust + data collection)
-- Runs in parallel (fast) + sequentially (context-aware)
+- Runs sequentially with context flow (each agent uses prior agent's output)
 
 ---
 
@@ -85,18 +85,18 @@ No learning loop                   Real-time optimization
                         │
 ┌─────────────────────────────────────────────────┐
 │ BACKEND                   │ FRONTEND            │
-│ FastAPI (Python)          │ Next.js 15          │
+│ FastAPI (Python 3.12)     │ Next.js 15          │
 │ Celery (task queue)       │ React 19            │
-│ PostgreSQL (Supabase)     │ Tailwind CSS 4      │
+│ PostgreSQL + Alembic      │ Tailwind CSS v4     │
 │ Redis (session state)     │ Clerk (auth)        │
-│ Qdrant (vector store)     │                     │
+│ Qdrant (vector store)     │ Zustand v5          │
 └─────────────────────────────────────────────────┘
                         │
 ┌─────────────────────────────────────────────────┐
 │ INFRASTRUCTURE                                  │
 │ Vercel (frontend) | AWS ECS (backend)           │
-│ RDS (database) | ElastiCache (redis)            │
-│ GitHub Actions (CI/CD) | Langfuse (eval)       │
+│ AWS Lambda (agents) | RDS | ElastiCache         │
+│ GitHub Actions (CI/CD) | Langfuse (eval gate)  │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -108,9 +108,10 @@ No learning loop                   Real-time optimization
 1. **Intake Form** (30 sec) — Product name, description, competitors
 2. **Tracker View** (2 min) — Watch agents stream in real-time
    - Market Intelligence starts
-   - Audience Insight begins
-   - Launch Strategy reasoning
+   - Audience Insight begins with market context
+   - Launch Strategy builds on personas
    - Content generation
+   - Analytics dashboard populates
 3. **First HITL Checkpoint** (1 min) — Human approves/edits first output
 4. **Brief Card** (2 min) — Competitive landscape, market size, trends
 5. **Personas** (2 min) — 3 buyer personas with pain points, goals, channels
@@ -139,6 +140,7 @@ No learning loop                   Real-time optimization
 | **Qdrant** | Open-source, self-hostable, better cost than Pinecone, managed option available. |
 | **HITL-first design** | Not a UX afterthought. Core architecture: pause → human approval → resume. Builds trust + collects improvement data. |
 | **Redis + PostgreSQL + Qdrant** | Separates concerns: session state (fast), structured data (queryable), vectors (semantic). |
+| **Eval gate in CI** | Every PR touching agent prompts must pass quality baseline. Agent quality is invisible without structured measurement. |
 
 ---
 
@@ -147,7 +149,7 @@ No learning loop                   Real-time optimization
 ### Engineering
 | Metric | Result |
 |--------|--------|
-| TypeScript errors | **0/10 routes** |
+| TypeScript errors | **0/13 routes** |
 | ESLint violations | **0 (strict mode)** |
 | Unit test coverage | **92%** |
 | Eval regression gate | **Baseline ✅** |
@@ -160,6 +162,7 @@ No learning loop                   Real-time optimization
 | HITL checkpoints | 2+ per launch | ✅ Implemented |
 | Content output formats | 3 (email/social/ads) | ✅ All 3 |
 | API integration ready | 3 integrations | ✅ HubSpot/Slack/GA4 |
+| Eval suites | 5 agents | ✅ All 5 implemented |
 
 ---
 
@@ -170,10 +173,11 @@ No learning loop                   Real-time optimization
 ### You Did (Architecture & Judgment)
 - Designed the 6-agent system from scratch
 - Chose each technology (FastAPI > Node, Qdrant > Pinecone)
-- Engineered HITL as a core pattern
+- Engineered HITL as a core architectural pattern
 - Built the entire frontend (13 routes, zero TypeScript errors)
 - Designed security (RBAC, encryption, OWASP)
-- Created all 16 product documents
+- Built eval framework + CI regression gate
+- Created all 22+ product documents
 
 ### Claude (Execution)
 - Wrote agent code (you reviewed/guided)
@@ -194,12 +198,12 @@ No learning loop                   Real-time optimization
 ### Short-term (1 month)
 - Launch beta with 10 users
 - Collect HITL data to improve agents
-- Add Stripe (payments) and PostHog (analytics)
+- Add Stripe (payments)
 
 ### Medium-term (3 months)
+- Cross-session memory learning loop (long-term agent improvement)
+- Team collaboration (multi-user launches)
 - Custom fine-tuned models for domain
-- Advanced competitor tracking
-- Multi-user team collaboration
 
 ---
 
@@ -221,14 +225,22 @@ A: SaaS subscription (Starter $99/mo, Pro $299/mo, Enterprise custom). Per-launc
 A: Latency under load. Right now, 2–3 min per launch is acceptable. If we hit 10,000 concurrent launches, Celery queue management + database queries could bottleneck. Mitigation: Redis Streams instead of Celery, sharded Qdrant.
 
 **Q: How do you avoid hallucinated competitive data?**  
-A: Tavily (web search) is sourced from real data. Personas are validated against HubSpot/GA4 data. HITL checkpoints catch nonsense. Over time: fine-tune on real customer feedback.
+A: Tavily (web search) is sourced from real data. Personas are validated against HubSpot/GA4 data. HITL checkpoints catch nonsense. Eval suites measure hallucination rate per agent. Over time: fine-tune on real customer feedback.
+
+**Q: What does the eval framework actually measure?**  
+A: Four signals per agent — relevance (does the output address the brief?), hallucination rate (factual claims without source), schema compliance (parseable JSON?), and edit rate (how much do users change it?). CI blocks regressions.
 
 ---
 
 ## Closing
 
-**"LaunchIQ is a founding engineer's take on launch intelligence. I built the system end-to-end—architecture, backend, frontend, security, docs. It works today because I thought through the hard problems: memory architecture, async HITL, agent coordination, prompt engineering for consistency. And it's ready to ship."**
+**"LaunchIQ is a founding engineer's take on launch intelligence. I built the system end-to-end — architecture, backend, frontend, agents, evals, security, docs. It works today because I thought through the hard problems: memory architecture, async HITL, agent coordination, prompt engineering for consistency, and quality measurement with a CI gate. It's production-ready and ready to ship."**
 
 ---
 
 **Slides per minute: 2 slides + 15 min demo + 3 min Q&A = 30 min total**
+
+---
+
+**Contact:** Venkata Anil Kumar  
+vanilkumarch@gmail.com | linkedin.com/in/venkataanilkumar | github.com/venkataanilkumar
