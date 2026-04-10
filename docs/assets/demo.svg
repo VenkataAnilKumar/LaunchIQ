@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="860" height="500" viewBox="0 0 860 500"
+     xmlns="http://www.w3.org/2000/svg"
+     role="img" aria-label="LaunchIQ — 6 AI agents deliver a complete launch playbook in under 3 minutes">
+
+  <title>LaunchIQ Demo — AI-Powered Product Launch Intelligence</title>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!--  Terminal chrome                                -->
+  <!-- ═══════════════════════════════════════════════ -->
+
+  <!-- Window background -->
+  <rect width="860" height="500" rx="10" fill="#0d1117"/>
+
+  <!-- Title bar -->
+  <rect width="860" height="42" rx="10" fill="#161b22"/>
+  <rect y="30" width="860" height="12" fill="#161b22"/>
+  <line x1="0" y1="42" x2="860" y2="42" stroke="#30363d" stroke-width="1"/>
+
+  <!-- Traffic lights -->
+  <circle cx="22" cy="21" r="6.5" fill="#ff5f57"/>
+  <circle cx="20" cy="19" r="2.2" fill="#ff8983" opacity="0.55"/>
+  <circle cx="43" cy="21" r="6.5" fill="#febc2e"/>
+  <circle cx="41" cy="19" r="2.2" fill="#ffd166" opacity="0.55"/>
+  <circle cx="64" cy="21" r="6.5" fill="#28c840"/>
+  <circle cx="62" cy="19" r="2.2" fill="#6eea6e" opacity="0.55"/>
+
+  <!-- Window title text -->
+  <text x="430" y="26"
+        font-family="'SF Mono','Fira Code','Cascadia Code',Consolas,monospace"
+        font-size="12" text-anchor="middle" fill="#484f58">
+    launchiq — bash — 860×500
+  </text>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!--  Content lines — 16s loop, SMIL animations     -->
+  <!--                                                 -->
+  <!--  Timeline:                                      -->
+  <!--   0.5s  command                                 -->
+  <!--   1.0s  header                                  -->
+  <!--   1.8s  orchestrator ✓                          -->
+  <!--   2.6s  market intel ✓                          -->
+  <!--   3.4s  audience insight ✓                      -->
+  <!--   4.2s  launch strategy ✓                       -->
+  <!--   5.0s  content gen ✓                           -->
+  <!--   5.8s  analytics ✓                             -->
+  <!--   7.0s  playbook done                           -->
+  <!--   8.0s  results (market, personas, gtm, content)-->
+  <!--   9.5s  HITL checkpoint                         -->
+  <!--  10.0s  URL                                     -->
+  <!--  12.0s  hold ends → fade out                    -->
+  <!--  14.0s  fully hidden, loop restarts             -->
+  <!-- ═══════════════════════════════════════════════ -->
+
+  <!-- LINE: command (0.5s = 3.1%) -->
+  <text y="72" opacity="0"
+        font-family="'SF Mono','Fira Code','Cascadia Code',Consolas,monospace"
+        font-size="13.5">
+    <tspan x="30" fill="#3fb950">❯</tspan>
+    <tspan fill="#58a6ff"> launchiq</tspan>
+    <tspan fill="#e6edf3"> launch </tspan>
+    <tspan fill="#d2a8ff">--product</tspan>
+    <tspan fill="#a5d6ff"> "Cursor for Backend Devs"</tspan>
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.031;0.056;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- SEPARATOR 1 -->
+  <line x1="30" y1="88" x2="830" y2="88" stroke="#21262d" stroke-width="1" opacity="0">
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.063;0.081;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </line>
+
+  <!-- LINE: header (1.0s = 6.3%) -->
+  <text y="110" opacity="0"
+        font-family="'SF Mono','Fira Code','Cascadia Code',Consolas,monospace"
+        font-size="13.5">
+    <tspan x="30" fill="#6e7681">  </tspan>
+    <tspan fill="#e6edf3" font-weight="bold">LaunchIQ</tspan>
+    <tspan fill="#58a6ff"> v1.0.0</tspan>
+    <tspan fill="#484f58">  ·  AI-Powered Product Launch Intelligence</tspan>
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.063;0.081;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- LINE: Orchestrator (1.8s = 11.3%) -->
+  <text y="144" opacity="0"
+        font-family="'SF Mono','Fira Code','Cascadia Code',Consolas,monospace"
+        font-size="13.5">
+    <tspan x="30" fill="#30363d">  ◆</tspan>
+    <tspan fill="#e6edf3"> Orchestrator        </tspan>
+    <tspan fill="#484f58">Planning pipeline...          </tspan>
+    <tspan x="598" fill="#3fb950">✓</tspan>
+    <tspan fill="#484f58">  0.4s</tspan>
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.113;0.131;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- LINE: Market Intelligence (2.6s = 16.3%) -->
+  <text y="166" opacity="0"
+        font-family="'SF Mono','Fira Code','Cascadia Code',Consolas,monospace"
+        font-size="13.5">
+    <tspan x="30" fill="#30363d">  ◆</tspan>
+    <tspan fill="#e6edf3"> Market Intelligence </tspan>
+    <tspan fill="#484f58">Researching 247 sources...    </tspan>
+    <tspan x="598" fill="#3fb950">✓</tspan>
+    <tspan fill="#484f58">  12.1s</tspan>
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.163;0.181;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- LINE: Audience Insight (3.4s = 21.3%) -->
+  <text y="188" opacity="0"
+        font-family="'SF Mono','Fira Code','Cascadia Code',Consolas,monospace"
+        font-size="13.5">
+    <tspan x="30" fill="#30363d">  ◆</tspan>
+    <tspan fill="#e6edf3"> Audience Insight    </tspan>
+    <tspan fill="#484f58">Building buyer personas...    </tspan>
+    <tspan x="598" fill="#3fb950">✓</tspan>
+    <tspan fill="#484f58">  8.3s</tspan>
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.213;0.231;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- LINE: Launch Strategy (4.2s = 26.3%) -->
+  <text y="210" opacity="0"
+        font-family="'SF Mono','Fira Code','Cascadia Code',Consolas,monospace"
+        font-size="13.5">
+    <tspan x="30" fill="#30363d">  ◆</tspan>
+    <tspan fill="#e6edf3"> Launch Strategy     </tspan>
+    <tspan fill="#484f58">Generating GTM roadmap...     </tspan>
+    <tspan x="598" fill="#3fb950">✓</tspan>
+    <tspan fill="#484f58">  6.7s</tspan>
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.263;0.281;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- LINE: Content Generation (5.0s = 31.3%) -->
+  <text y="232" opacity="0"
+        font-family="'SF Mono','Fira Code','Cascadia Code',Consolas,monospace"
+        font-size="13.5">
+    <tspan x="30" fill="#30363d">  ◆</tspan>
+    <tspan fill="#e6edf3"> Content Generation  </tspan>
+    <tspan fill="#484f58">Writing 12 campaign assets... </tspan>
+    <tspan x="598" fill="#3fb950">✓</tspan>
+    <tspan fill="#484f58">  9.2s</tspan>
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.313;0.331;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- LINE: Analytics Feedback (5.8s = 36.3%) -->
+  <text y="254" opacity="0"
+        font-family="'SF Mono','Fira Code','Cascadia Code',Consolas,monospace"
+        font-size="13.5">
+    <tspan x="30" fill="#30363d">  ◆</tspan>
+    <tspan fill="#e6edf3"> Analytics Feedback  </tspan>
+    <tspan fill="#484f58">Configuring dashboards...     </tspan>
+    <tspan x="598" fill="#3fb950">✓</tspan>
+    <tspan fill="#484f58">  2.1s</tspan>
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.363;0.381;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- SEPARATOR 2 (6.5s = 40.6%) -->
+  <line x1="30" y1="270" x2="830" y2="270" stroke="#21262d" stroke-width="1" opacity="0">
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.406;0.419;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </line>
+
+  <!-- LINE: done message (7.0s = 43.8%) -->
+  <text y="292" opacity="0"
+        font-family="'SF Mono','Fira Code','Cascadia Code',Consolas,monospace"
+        font-size="13.5">
+    <tspan x="30" fill="#3fb950" font-weight="bold">  ✓  Launch playbook ready</tspan>
+    <tspan fill="#30363d">  ───────────────────────────  </tspan>
+    <tspan fill="#e6edf3">2m 47s</tspan>
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.438;0.456;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- SEPARATOR 3 (7.5s = 46.9%) -->
+  <line x1="30" y1="308" x2="830" y2="308" stroke="#21262d" stroke-width="1" opacity="0">
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.469;0.481;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </line>
+
+  <!-- LINE: Market result (8.0s = 50%) -->
+  <text y="332" opacity="0"
+        font-family="'SF Mono','Fira Code','Cascadia Code',Consolas,monospace"
+        font-size="13.5">
+    <tspan x="30" fill="#6e7681">  Market    </tspan>
+    <tspan fill="#d2a8ff">$4.2B TAM</tspan>
+    <tspan fill="#484f58">  ·  18% YoY  ·  </tspan>
+    <tspan fill="#e6edf3">Blue ocean positioning identified</tspan>
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.500;0.519;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- LINE: Personas result (8.3s = 51.9%) -->
+  <text y="354" opacity="0"
+        font-family="'SF Mono','Fira Code','Cascadia Code',Consolas,monospace"
+        font-size="13.5">
+    <tspan x="30" fill="#6e7681">  Personas  </tspan>
+    <tspan fill="#e6edf3">Solo Dev</tspan>
+    <tspan fill="#484f58">  ·  </tspan>
+    <tspan fill="#e6edf3">Backend Lead</tspan>
+    <tspan fill="#484f58">  ·  </tspan>
+    <tspan fill="#e6edf3">Infrastructure CTO</tspan>
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.519;0.538;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- LINE: GTM result (8.6s = 53.8%) -->
+  <text y="376" opacity="0"
+        font-family="'SF Mono','Fira Code','Cascadia Code',Consolas,monospace"
+        font-size="13.5">
+    <tspan x="30" fill="#6e7681">  GTM Plan  </tspan>
+    <tspan fill="#d2a8ff">3 phases</tspan>
+    <tspan fill="#484f58">  ·  90-day roadmap  ·  </tspan>
+    <tspan fill="#d2a8ff">8 milestones</tspan>
+    <tspan fill="#484f58"> defined</tspan>
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.538;0.556;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- LINE: Content result (8.9s = 55.6%) -->
+  <text y="398" opacity="0"
+        font-family="'SF Mono','Fira Code','Cascadia Code',Consolas,monospace"
+        font-size="13.5">
+    <tspan x="30" fill="#6e7681">  Content   </tspan>
+    <tspan fill="#d2a8ff">12 assets</tspan>
+    <tspan fill="#484f58"> ready  —  email sequences · social posts · paid ads</tspan>
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.556;0.575;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- HITL background highlight (9.5s = 59.4%) -->
+  <rect x="22" y="414" width="816" height="28" rx="4" fill="#1c1410" opacity="0">
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.594;0.613;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- LINE: HITL checkpoint (9.5s = 59.4%) -->
+  <text y="432" opacity="0"
+        font-family="'SF Mono','Fira Code','Cascadia Code',Consolas,monospace"
+        font-size="13.5">
+    <tspan x="30" fill="#f0883e">  ⚠  HITL checkpoint</tspan>
+    <tspan fill="#6e7681">  —  review market brief  </tspan>
+    <tspan fill="#3fb950">[approve]</tspan>
+    <tspan fill="#484f58">  [edit]</tspan>
+    <tspan fill="#484f58">  [reject]</tspan>
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.594;0.613;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- LINE: URL (10.0s = 62.5%) -->
+  <text y="468" opacity="0"
+        font-family="'SF Mono','Fira Code','Cascadia Code',Consolas,monospace"
+        font-size="13.5">
+    <tspan x="30" fill="#3fb950">  →  </tspan>
+    <tspan fill="#58a6ff">dashboard.launchiq.io/launches/01JQK9M2F</tspan>
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.625;0.644;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Blinking cursor (appears at 10.0s, blinks 3x, fades with everything) -->
+  <rect x="420" y="454" width="8.5" height="16" rx="1" fill="#58a6ff" opacity="0">
+    <animate attributeName="opacity"
+             values="0;0;0;1;0;1;0;1;0;0;0"
+             keyTimes="0;0.625;0.638;0.656;0.675;0.694;0.713;0.731;0.75;0.813;1"
+             dur="16s" repeatCount="indefinite"/>
+  </rect>
+
+</svg>

@@ -24,46 +24,7 @@
 
 <br/>
 
-<!--
-  DEMO GIF — Record with LICEcap/Kap:
-  1. make demo
-  2. Fill intake form → watch 4 agents run live → HITL approve → view content
-  3. Save as docs/assets/demo.gif (30-45s, 85% width)
--->
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                                                                     │
-│   $ make demo                                                       │
-│                                                                     │
-│   ✓ PostgreSQL  ✓ Redis  ✓ Qdrant  ✓ API :8000  ✓ Frontend :3000  │
-│                                                                     │
-│   ⠿ Orchestrator        Planning pipeline...                        │
-│   ⠿ Market Intelligence  Searching market data + competitors...     │
-│   ✓ Market Intelligence  Complete  (847 tokens · 23s)              │
-│                                                                     │
-│     ⚡ HITL · brief_review                                          │
-│        Market: $4.2B · Gap: No AI-native launch platform            │
-│        → approved ✓                                                 │
-│                                                                     │
-│   ⠿ Audience Insight    Building personas from market data...       │
-│   ✓ Audience Insight    2 personas created  (312 tokens · 8s)      │
-│                                                                     │
-│   ⠿ Launch Strategy     Thinking... (extended reasoning)            │
-│   ✓ Launch Strategy     90-day plan ready  (1,204 tokens · 41s)    │
-│                                                                     │
-│     ⚡ HITL · strategy_review → approved ✓                         │
-│                                                                     │
-│   ⠿ Content Generation  Email + Social + Ads in parallel...         │
-│   ✓ Content Generation  14 pieces across 3 formats  (891 tokens)   │
-│                                                                     │
-│   ✓ Pipeline complete in 3m 47s                                     │
-│     → http://localhost:3000/launch/abc-123/brief                   │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-<sub>Replace the block above with `docs/assets/demo.gif` once recorded</sub>
+<img src="docs/assets/demo.svg" alt="LaunchIQ — 6 AI agents deliver a complete launch playbook in under 3 minutes" width="100%"/>
 
 </div>
 
