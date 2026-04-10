@@ -1,1 +1,49 @@
+# Core API
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+pydantic>=2.10.0
+pydantic-settings>=2.7.0
+python-multipart>=0.0.12
+
+# Auth
 python-jose[cryptography]>=3.3.0
+
+# Database
+sqlalchemy[asyncio]>=2.0.0
+alembic>=1.14.0
+asyncpg>=0.30.0
+
+# Cache / Message broker
+redis>=5.2.0
+celery>=5.4.0
+
+# AI
+anthropic>=0.45.0
+
+# Vector store
+qdrant-client>=1.13.0
+
+# HTTP client
+httpx>=0.28.0
+
+# Memory / Search
+openai>=1.58.0
+
+# Observability
+langfuse>=2.58.0
+langsmith>=0.3.0
+sentry-sdk[fastapi]>=2.20.0
+
+# Integration SDKs
+hubspot-api-client>=9.0.0
+slack-sdk>=3.33.0
+google-analytics-data>=0.18.0
+
+# Security / Encoding
+passlib[bcrypt]>=1.7.4
+python-dotenv>=1.0.0
+
+# Testing
+pytest>=8.3.0
+pytest-asyncio>=0.24.0
+pytest-cov>=6.0.0
