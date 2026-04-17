@@ -468,3 +468,5 @@ If LaunchIQ solves a problem you care about —<br/>as a customer, investor, co-
 <sub>Made with care by **Venkata Anil Kumar** · © 2026 LaunchIQ · MIT License</sub>
 
 </div>
+
+<!-- quickdraw-doc-touch -->
