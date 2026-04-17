@@ -22,6 +22,8 @@
 
 [**Live Demo**](https://launchiq.io) · [**Documentation**](docs/) · [**Architecture**](docs/03_AI_Architecture/04_Agentic_AI_Architecture.md) · [**Portfolio**](portfolio/03_Case_Study.md)
 
+⭐ If LaunchIQ helps your team, please star this repository to support the project.
+
 <br/>
 
 <img src="docs/assets/demo.svg" alt="LaunchIQ — 6 AI agents deliver a complete launch playbook in under 3 minutes" width="100%"/>
