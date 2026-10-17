@@ -16,12 +16,15 @@ from pydantic import BaseModel, ValidationError
 
 logger = logging.getLogger(__name__)
 
-# Simple heuristics — phrases that suggest confabulation
+# Expanded heuristics — phrases that suggest confabulation or unverifiable claims
 _HALLUCINATION_SIGNALS = [
-    r"\bas of \d{4}\b",           # stale date claims
-    r"\bI don't have access\b",   # model talking about itself
+    r"\bas of \d{4}\b",                 # stale date claims
+    r"\bI don't have access\b",         # model talking about itself
     r"\bI cannot browse\b",
     r"\bmy training data\b",
+    r"\b(always|never|100%|guaranteed)\b",  # absolute claims without evidence
+    r"\baccording to (studies|research)\b", # vague attribution
+    r"\b(exact|precise) (figure|number|percentage)\b",
 ]
 
 
@@ -30,6 +33,7 @@ class ValidationResult(BaseModel):
     validated_output: dict[str, Any]
     schema_errors: list[str] = []
     hallucination_flags: list[str] = []
+    severity: str = "none"  # none | low | medium | high
 
 
 class OutputValidator:
@@ -39,7 +43,11 @@ class OutputValidator:
             logger.error("Output validation failed: %s", result.schema_errors)
             raise ValueError(f"Agent output failed schema validation: {result.schema_errors}")
         if result.hallucination_flags:
-            logger.warning("Hallucination signals detected: %s", result.hallucination_flags)
+            logger.warning(
+                "Hallucination signals detected (severity=%s): %s",
+                result.severity,
+                result.hallucination_flags,
+            )
         return result.validated_output
 
     def _run(self, raw: dict[str, Any], schema: type[BaseModel]) -> ValidationResult:
@@ -59,7 +67,16 @@ class OutputValidator:
             if matches:
                 flags.extend(matches)
 
-        return ValidationResult(valid=True, validated_output=validated, hallucination_flags=flags)
+        severity = "none"
+        if flags:
+            severity = "high" if len(flags) >= 3 else "medium" if len(flags) >= 2 else "low"
+
+        return ValidationResult(
+            valid=True,
+            validated_output=validated,
+            hallucination_flags=flags,
+            severity=severity,
+        )
 
     def validate_text(self, text: str) -> list[str]:
         """Run heuristics on raw text — returns list of flagged phrases."""
