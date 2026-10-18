@@ -78,7 +78,10 @@ async def run_tool_loop(
 
         if response.stop_reason == "end_turn":
             if cfg.enable_reflection and iteration > 0 and final_text:
-                final_text = await _maybe_reflect(client, params, messages, final_text)
+                improved = await _maybe_reflect(client, params, messages, final_text)
+                if improved and improved != final_text:
+                    logger.info("Reflection improved final answer (len %d -> %d)", len(final_text), len(improved))
+                    final_text = improved
             return final_text, tool_log, thinking_text
 
         if response.stop_reason != "tool_use" or tool_executor is None:
