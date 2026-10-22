@@ -8,6 +8,7 @@ Enhancements:
 - Per-section truncation to keep prompts within practical token budgets
 - Additional supported sections (tool_history, constraints)
 - More robust formatting for nested data
+- Soft overall character budget; drops trailing lower-priority sections when exceeded
 """
 from __future__ import annotations
 
@@ -24,6 +25,8 @@ _SECTION_TEMPLATE = "<{tag}>\n{content}\n</{tag}>"
 
 # Soft limit per section (characters). Prevents a single large RAG blob from dominating the prompt.
 _MAX_SECTION_CHARS = 4000
+# Soft overall budget for the assembled context block (characters).
+_MAX_TOTAL_CHARS = 12000
 
 
 class ContextBuilder:
@@ -34,10 +37,12 @@ class ContextBuilder:
         user_message: str,
         context: dict[str, Any],
         max_section_chars: int = _MAX_SECTION_CHARS,
+        max_total_chars: int = _MAX_TOTAL_CHARS,
     ) -> str:
         sections: list[str] = []
 
         # Ordered for typical pipeline flow (market → audience → brand → memory → tools → constraints)
+        # Trailing sections are lower priority for the budget drop.
         section_map = [
             ("market_data", "market_data"),
             ("personas", "personas"),
@@ -52,7 +57,12 @@ class ContextBuilder:
             if value := context.get(key):
                 content = _fmt(value)
                 content = _truncate(content, max_section_chars)
-                sections.append(_SECTION_TEMPLATE.format(tag=tag, content=content))
+                section = _SECTION_TEMPLATE.format(tag=tag, content=content)
+                # Enforce total budget by dropping this (and remaining) if it would exceed
+                projected = "\n\n".join(sections + [section])
+                if len(projected) > max_total_chars and sections:
+                    break
+                sections.append(section)
 
         if not sections:
             return user_message

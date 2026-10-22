@@ -51,6 +51,7 @@ async def run_tool_loop(
     tool_log: list[dict[str, Any]] = []
     thinking_text: str | None = None
     max_iters = params.pop("_max_iterations", cfg.max_iterations)
+    last_tool_count = 0
 
     for iteration in range(max_iters):
         iter_start = time.perf_counter()
@@ -68,6 +69,7 @@ async def run_tool_loop(
         final_text = "".join(text_parts)
 
         tool_count = sum(1 for b in response.content if b.type == "tool_use")
+        last_tool_count = tool_count
         logger.info(
             "Cognitive loop iter=%d stop=%s tools=%d latency_ms=%d",
             iteration,
@@ -113,7 +115,12 @@ async def run_tool_loop(
         messages.append({"role": "assistant", "content": response.content})
         messages.append({"role": "user", "content": tool_results})
 
-    logger.warning("Cognitive loop hit max_iterations — returning last text")
+    logger.warning(
+        "Cognitive loop hit max_iterations=%d — returning last text (last_tool_count=%d, total_tools_logged=%d)",
+        max_iters,
+        last_tool_count,
+        len(tool_log),
+    )
     return final_text, tool_log, thinking_text
 
 
