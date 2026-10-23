@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.agents._base.cognitive_loop import LoopConfig, run_tool_loop
+from src.agents._base.cognitive_loop import LoopConfig, run_tool_loop, _truncate_tool_result
 
 
 @pytest.mark.asyncio
@@ -102,3 +102,19 @@ async def test_max_iterations_warning_path():
     # Should have executed tools up to the limit and returned whatever text was last (empty here)
     assert isinstance(tools, list)
     assert mock_client.messages.create.call_count == 2
+
+
+def test_truncate_tool_result_small():
+    """Small results pass through unchanged."""
+    small = {"data": "ok"}
+    assert _truncate_tool_result(small) == small
+
+
+def test_truncate_tool_result_large():
+    """Large results are truncated with a marker."""
+    large = {"data": "x" * 3000}
+    out = _truncate_tool_result(large)
+    assert isinstance(out, dict)
+    assert out.get("truncated") is True
+    assert "original_length" in out
+    assert len(json.dumps(out)) < 3000  # type: ignore

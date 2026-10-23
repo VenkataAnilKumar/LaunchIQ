@@ -8,6 +8,9 @@ is 'end_turn' or max_iterations reached.
 Optional reflection step (when LoopConfig.enable_reflection=True) injects
 a brief self-critique before the final return to improve output quality
 without changing the public contract.
+
+Tool results are truncated to a soft character limit before being fed back
+to prevent context window bloat from large tool/RAG payloads.
 """
 from __future__ import annotations
 
@@ -21,6 +24,9 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
+# Soft limit on tool result size (characters) to protect context window.
+_MAX_TOOL_RESULT_CHARS = 2000
+
 
 class LoopConfig(BaseModel):
     max_iterations: int = 10
@@ -30,6 +36,19 @@ class LoopConfig(BaseModel):
 class CognitiveLoop:
     def __init__(self, config: LoopConfig) -> None:
         self.config = config
+
+
+def _truncate_tool_result(result: Any, max_chars: int = _MAX_TOOL_RESULT_CHARS) -> Any:
+    """Truncate large tool results to keep conversation context bounded."""
+    try:
+        serialized = json.dumps(result)
+        if len(serialized) <= max_chars:
+            return result
+        # Truncate the serialized form and re-wrap as a dict with a note
+        truncated = serialized[: max_chars - 30] + "... [truncated]"
+        return {"truncated": True, "content": truncated, "original_length": len(serialized)}
+    except Exception:
+        return result
 
 
 async def run_tool_loop(
@@ -101,6 +120,9 @@ async def run_tool_loop(
             except Exception as exc:
                 logger.warning("Tool %s failed: %s", block.name, exc)
                 result = {"error": str(exc)}
+
+            # Truncate large results before feeding back
+            result = _truncate_tool_result(result)
 
             tool_log.append({"tool_name": block.name, "input": block.input, "output": result})
             tool_results.append(
