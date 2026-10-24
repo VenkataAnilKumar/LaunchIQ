@@ -118,3 +118,26 @@ def test_truncate_tool_result_large():
     assert out.get("truncated") is True
     assert "original_length" in out
     assert len(json.dumps(out)) < 3000  # type: ignore
+
+
+@pytest.mark.asyncio
+async def test_api_retry_on_transient_failure():
+    """API call is retried once on exception, then succeeds."""
+    mock_client = MagicMock()
+    success_resp = MagicMock()
+    success_resp.stop_reason = "end_turn"
+    success_resp.content = [MagicMock(type="text", text="Recovered.")]
+
+    # First call fails, second succeeds
+    mock_client.messages.create.side_effect = [RuntimeError("rate limited"), success_resp]
+
+    params = {"messages": [{"role": "user", "content": "test"}]}
+    text, tools, _ = await run_tool_loop(
+        mock_client,
+        params,
+        tool_executor=None,
+        config=LoopConfig(enable_reflection=False, max_api_retries=1),
+    )
+
+    assert text == "Recovered."
+    assert mock_client.messages.create.call_count == 2

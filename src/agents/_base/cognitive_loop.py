@@ -11,9 +11,13 @@ without changing the public contract.
 
 Tool results are truncated to a soft character limit before being fed back
 to prevent context window bloat from large tool/RAG payloads.
+
+API calls are retried once (configurable) on transient failures for better
+reliability under rate limits or provider blips.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import time
@@ -31,6 +35,7 @@ _MAX_TOOL_RESULT_CHARS = 2000
 class LoopConfig(BaseModel):
     max_iterations: int = 10
     enable_reflection: bool = True
+    max_api_retries: int = 1
 
 
 class CognitiveLoop:
@@ -49,6 +54,33 @@ def _truncate_tool_result(result: Any, max_chars: int = _MAX_TOOL_RESULT_CHARS) 
         return {"truncated": True, "content": truncated, "original_length": len(serialized)}
     except Exception:
         return result
+
+
+async def _call_with_retry(
+    client: anthropic.Anthropic,
+    params: dict[str, Any],
+    max_retries: int,
+) -> Any:
+    """Call messages.create with simple exponential-ish backoff on failure."""
+    last_exc: Exception | None = None
+    for attempt in range(max_retries + 1):
+        try:
+            return client.messages.create(**params)
+        except Exception as exc:
+            last_exc = exc
+            if attempt >= max_retries:
+                break
+            wait = 0.4 * (attempt + 1)
+            logger.warning(
+                "Claude API call failed (attempt %d/%d): %s — retrying in %.1fs",
+                attempt + 1,
+                max_retries + 1,
+                exc,
+                wait,
+            )
+            await asyncio.sleep(wait)
+    logger.error("Claude API call failed after %d retries: %s", max_retries, last_exc)
+    raise last_exc if last_exc else RuntimeError("API call failed")
 
 
 async def run_tool_loop(
@@ -75,7 +107,7 @@ async def run_tool_loop(
     for iteration in range(max_iters):
         iter_start = time.perf_counter()
         call_params = {**params, "messages": messages}
-        response = client.messages.create(**call_params)
+        response = await _call_with_retry(client, call_params, cfg.max_api_retries)
         iter_ms = int((time.perf_counter() - iter_start) * 1000)
 
         # Collect thinking blocks
@@ -165,7 +197,7 @@ async def _maybe_reflect(
     ]
     try:
         reflect_params = {**params, "messages": reflect_messages, "max_tokens": params.get("max_tokens", 1024)}
-        response = client.messages.create(**reflect_params)
+        response = await _call_with_retry(client, reflect_params, 0)  # no extra retry on reflection
         improved = "".join(b.text for b in response.content if b.type == "text")
         return improved.strip() or current_text
     except Exception as exc:
