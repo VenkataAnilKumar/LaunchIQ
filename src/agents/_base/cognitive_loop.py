@@ -14,6 +14,9 @@ to prevent context window bloat from large tool/RAG payloads.
 
 API calls are retried once (configurable) on transient failures for better
 reliability under rate limits or provider blips.
+
+Token usage (input/output) is accumulated across iterations and logged on
+completion for cost observability.
 """
 from __future__ import annotations
 
@@ -103,12 +106,20 @@ async def run_tool_loop(
     thinking_text: str | None = None
     max_iters = params.pop("_max_iterations", cfg.max_iterations)
     last_tool_count = 0
+    total_input_tokens = 0
+    total_output_tokens = 0
 
     for iteration in range(max_iters):
         iter_start = time.perf_counter()
         call_params = {**params, "messages": messages}
         response = await _call_with_retry(client, call_params, cfg.max_api_retries)
         iter_ms = int((time.perf_counter() - iter_start) * 1000)
+
+        # Accumulate token usage when available (Anthropic Message.usage)
+        usage = getattr(response, "usage", None)
+        if usage is not None:
+            total_input_tokens += getattr(usage, "input_tokens", 0) or 0
+            total_output_tokens += getattr(usage, "output_tokens", 0) or 0
 
         # Collect thinking blocks
         for block in response.content:
@@ -135,9 +146,21 @@ async def run_tool_loop(
                 if improved and improved != final_text:
                     logger.info("Reflection improved final answer (len %d -> %d)", len(final_text), len(improved))
                     final_text = improved
+            logger.info(
+                "Cognitive loop complete: input_tokens=%d output_tokens=%d iterations=%d",
+                total_input_tokens,
+                total_output_tokens,
+                iteration + 1,
+            )
             return final_text, tool_log, thinking_text
 
         if response.stop_reason != "tool_use" or tool_executor is None:
+            logger.info(
+                "Cognitive loop complete: input_tokens=%d output_tokens=%d iterations=%d",
+                total_input_tokens,
+                total_output_tokens,
+                iteration + 1,
+            )
             return final_text, tool_log, thinking_text
 
         # --- Execute tool calls ---
@@ -170,10 +193,12 @@ async def run_tool_loop(
         messages.append({"role": "user", "content": tool_results})
 
     logger.warning(
-        "Cognitive loop hit max_iterations=%d — returning last text (last_tool_count=%d, total_tools_logged=%d)",
+        "Cognitive loop hit max_iterations=%d — returning last text (last_tool_count=%d, total_tools_logged=%d, input_tokens=%d, output_tokens=%d)",
         max_iters,
         last_tool_count,
         len(tool_log),
+        total_input_tokens,
+        total_output_tokens,
     )
     return final_text, tool_log, thinking_text
 
