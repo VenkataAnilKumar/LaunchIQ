@@ -16,7 +16,8 @@ API calls are retried once (configurable) on transient failures for better
 reliability under rate limits or provider blips.
 
 Token usage (input/output) is accumulated across iterations and logged on
-completion for cost observability.
+completion for cost observability. A rough USD cost estimate (Sonnet-class rates)
+is also logged.
 """
 from __future__ import annotations
 
@@ -33,6 +34,10 @@ logger = logging.getLogger(__name__)
 
 # Soft limit on tool result size (characters) to protect context window.
 _MAX_TOOL_RESULT_CHARS = 2000
+
+# Approximate Sonnet-4.6 rates for cost observability (USD per million tokens).
+_INPUT_COST_PER_MTOK = 3.0
+_OUTPUT_COST_PER_MTOK = 15.0
 
 
 class LoopConfig(BaseModel):
@@ -57,6 +62,13 @@ def _truncate_tool_result(result: Any, max_chars: int = _MAX_TOOL_RESULT_CHARS) 
         return {"truncated": True, "content": truncated, "original_length": len(serialized)}
     except Exception:
         return result
+
+
+def _estimate_cost_usd(input_tokens: int, output_tokens: int) -> float:
+    """Rough cost estimate using Sonnet-class rates. For observability only."""
+    input_cost = (input_tokens / 1_000_000) * _INPUT_COST_PER_MTOK
+    output_cost = (output_tokens / 1_000_000) * _OUTPUT_COST_PER_MTOK
+    return round(input_cost + output_cost, 6)
 
 
 async def _call_with_retry(
@@ -146,19 +158,23 @@ async def run_tool_loop(
                 if improved and improved != final_text:
                     logger.info("Reflection improved final answer (len %d -> %d)", len(final_text), len(improved))
                     final_text = improved
+            est_cost = _estimate_cost_usd(total_input_tokens, total_output_tokens)
             logger.info(
-                "Cognitive loop complete: input_tokens=%d output_tokens=%d iterations=%d",
+                "Cognitive loop complete: input_tokens=%d output_tokens=%d est_cost_usd=%.6f iterations=%d",
                 total_input_tokens,
                 total_output_tokens,
+                est_cost,
                 iteration + 1,
             )
             return final_text, tool_log, thinking_text
 
         if response.stop_reason != "tool_use" or tool_executor is None:
+            est_cost = _estimate_cost_usd(total_input_tokens, total_output_tokens)
             logger.info(
-                "Cognitive loop complete: input_tokens=%d output_tokens=%d iterations=%d",
+                "Cognitive loop complete: input_tokens=%d output_tokens=%d est_cost_usd=%.6f iterations=%d",
                 total_input_tokens,
                 total_output_tokens,
+                est_cost,
                 iteration + 1,
             )
             return final_text, tool_log, thinking_text
@@ -192,13 +208,15 @@ async def run_tool_loop(
         messages.append({"role": "assistant", "content": response.content})
         messages.append({"role": "user", "content": tool_results})
 
+    est_cost = _estimate_cost_usd(total_input_tokens, total_output_tokens)
     logger.warning(
-        "Cognitive loop hit max_iterations=%d — returning last text (last_tool_count=%d, total_tools_logged=%d, input_tokens=%d, output_tokens=%d)",
+        "Cognitive loop hit max_iterations=%d — returning last text (last_tool_count=%d, total_tools_logged=%d, input_tokens=%d, output_tokens=%d, est_cost_usd=%.6f)",
         max_iters,
         last_tool_count,
         len(tool_log),
         total_input_tokens,
         total_output_tokens,
+        est_cost,
     )
     return final_text, tool_log, thinking_text
 
