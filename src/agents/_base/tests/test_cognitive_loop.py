@@ -141,3 +141,30 @@ async def test_api_retry_on_transient_failure():
 
     assert text == "Recovered."
     assert mock_client.messages.create.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_tool_error_count_is_tracked():
+    """Tool failures are counted internally and do not crash the loop (observability via logs)."""
+    mock_client = MagicMock()
+
+    tool_block = MagicMock(type="tool_use", name="failing_tool", input={}, id="t_err")
+    resp1 = MagicMock(stop_reason="tool_use", content=[tool_block])
+    resp2 = MagicMock(stop_reason="end_turn", content=[MagicMock(type="text", text="Done despite error.")])
+    mock_client.messages.create.side_effect = [resp1, resp2]
+
+    async def failing_exec(name, inp):
+        raise ValueError("tool exploded")
+
+    mock_exec = MagicMock()
+    mock_exec.execute = failing_exec
+
+    params = {"messages": []}
+    text, tools, _ = await run_tool_loop(
+        mock_client, params, tool_executor=mock_exec, config=LoopConfig(enable_reflection=False)
+    )
+
+    assert text == "Done despite error."
+    assert len(tools) == 1
+    assert "error" in tools[0]["output"]
+    # Counter is internal; this confirms the path that increments it still succeeds

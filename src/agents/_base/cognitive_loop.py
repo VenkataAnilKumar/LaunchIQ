@@ -18,7 +18,8 @@ reliability under rate limits or provider blips.
 Token usage (input/output) is accumulated across iterations and logged on
 completion for cost observability. A rough USD cost estimate (Sonnet-class rates)
 is also logged. Total loop latency is accumulated and logged. Optional cost_budget_usd
-emits a warning if the estimate exceeds the budget.
+emits a warning if the estimate exceeds the budget. Tool execution errors are counted
+and included in completion logs for reliability observability.
 """
 from __future__ import annotations
 
@@ -123,6 +124,7 @@ async def run_tool_loop(
     total_input_tokens = 0
     total_output_tokens = 0
     total_latency_ms = 0
+    tool_error_count = 0
 
     for iteration in range(max_iters):
         iter_start = time.perf_counter()
@@ -170,12 +172,13 @@ async def run_tool_loop(
                     cfg.cost_budget_usd,
                 )
             logger.info(
-                "Cognitive loop complete: input_tokens=%d output_tokens=%d est_cost_usd=%.6f total_latency_ms=%d iterations=%d",
+                "Cognitive loop complete: input_tokens=%d output_tokens=%d est_cost_usd=%.6f total_latency_ms=%d iterations=%d tool_errors=%d",
                 total_input_tokens,
                 total_output_tokens,
                 est_cost,
                 total_latency_ms,
                 iteration + 1,
+                tool_error_count,
             )
             return final_text, tool_log, thinking_text
 
@@ -188,12 +191,13 @@ async def run_tool_loop(
                     cfg.cost_budget_usd,
                 )
             logger.info(
-                "Cognitive loop complete: input_tokens=%d output_tokens=%d est_cost_usd=%.6f total_latency_ms=%d iterations=%d",
+                "Cognitive loop complete: input_tokens=%d output_tokens=%d est_cost_usd=%.6f total_latency_ms=%d iterations=%d tool_errors=%d",
                 total_input_tokens,
                 total_output_tokens,
                 est_cost,
                 total_latency_ms,
                 iteration + 1,
+                tool_error_count,
             )
             return final_text, tool_log, thinking_text
 
@@ -209,6 +213,7 @@ async def run_tool_loop(
             except Exception as exc:
                 logger.warning("Tool %s failed: %s", block.name, exc)
                 result = {"error": str(exc)}
+                tool_error_count += 1
 
             # Truncate large results before feeding back
             result = _truncate_tool_result(result)
@@ -234,10 +239,11 @@ async def run_tool_loop(
             cfg.cost_budget_usd,
         )
     logger.warning(
-        "Cognitive loop hit max_iterations=%d — returning last text (last_tool_count=%d, total_tools_logged=%d, input_tokens=%d, output_tokens=%d, est_cost_usd=%.6f, total_latency_ms=%d)",
+        "Cognitive loop hit max_iterations=%d — returning last text (last_tool_count=%d, total_tools_logged=%d, tool_errors=%d, input_tokens=%d, output_tokens=%d, est_cost_usd=%.6f, total_latency_ms=%d)",
         max_iters,
         last_tool_count,
         len(tool_log),
+        tool_error_count,
         total_input_tokens,
         total_output_tokens,
         est_cost,
