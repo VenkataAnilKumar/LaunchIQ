@@ -1,6 +1,7 @@
 """Unit tests for CognitiveLoop (mocked Anthropic client)."""
 from __future__ import annotations
 
+import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
