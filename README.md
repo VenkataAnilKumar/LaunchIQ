@@ -6,27 +6,26 @@
 
 ### AI-Powered Product Launch Intelligence
 
-*From idea to launch-ready in minutes — not months.*
+*Turn a product brief into a researched, human-reviewed launch plan.*
 
 <br/>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-6366f1.svg?style=for-the-badge)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
-[![Claude](https://img.shields.io/badge/Claude-Sonnet%204.6-D97706?style=for-the-badge&logo=anthropic&logoColor=white)](https://anthropic.com)
+[![Claude](https://img.shields.io/badge/Powered%20by-Claude-D97706?style=for-the-badge&logo=anthropic&logoColor=white)](https://anthropic.com)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![AWS Lambda](https://img.shields.io/badge/AWS-Lambda-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white)](https://aws.amazon.com/lambda)
 [![CI](https://img.shields.io/github/actions/workflow/status/venkataanilkumar/launchiq/pr.yml?style=for-the-badge&label=CI&logo=githubactions&logoColor=white)](https://github.com/venkataanilkumar/launchiq/actions)
 
 <br/>
 
-[**Live Demo**](https://launchiq.io) · [**Documentation**](docs/) · [**Architecture**](docs/03_AI_Architecture/04_Agentic_AI_Architecture.md) · [**Portfolio**](docs/portfolio/03_Case_Study.md)
+[**Demo**](docs/demo/README.md) · [**Documentation**](docs/) · [**Architecture**](docs/03_AI_Architecture/04_Agentic_AI_Architecture.md) · [**Portfolio**](docs/portfolio/03_Case_Study.md)
 
 ⭐ If LaunchIQ helps your team, please star this repository to support the project.
 
 <br/>
 
-<img src="docs/assets/demo.svg" alt="LaunchIQ — 6 AI agents deliver a complete launch playbook in under 3 minutes" width="100%"/>
+<img src="docs/demo/screenshots/04-review-market.webp" alt="LaunchIQ review step: formatted market research with Approve, Edit and Reject (fake-model demo data)" width="100%"/>
 
 </div>
 
@@ -40,10 +39,10 @@ Product launches fail not because of bad products — but because teams lack the
 
 - Market research takes **weeks** and costs **thousands**
 - Persona development is **guesswork** without real data
-- Launch strategies are **copy-pasted templates** from 2019
+- Launch strategies are **copy-pasted templates**
 - Content is written by committees with **no signal from the market**
 
-**LaunchIQ fixes this with a 6-agent AI pipeline that does in 4 minutes what agencies charge $50,000 to do in 6 weeks.**
+**LaunchIQ turns a short brief into market research, personas, a 90-day launch strategy and launch content, with a human review at two checkpoints.** (Run time and cost per launch have not been measured with a real model yet; see [Project Status](#project-status).)
 
 ---
 
@@ -66,10 +65,33 @@ Product launches fail not because of bad products — but because teams lack the
 - Buyer personas with messaging hooks
 - 90-day phased launch strategy
 - Full content bundle — email, social, ads (A/B variants)
+- Post-launch recommendations from the metrics *you* measure
+- One launch document you can read, copy and download as Markdown
 
 </td>
 </tr>
 </table>
+
+---
+
+## Demo
+
+There is no hosted demo yet; the demo runs on your computer with a fake model (no API keys), so the generated text
+is placeholder content. The full 6-minute walkthrough, with exact inputs and expected results, is in
+**[`docs/demo/`](docs/demo/README.md)**.
+
+| | |
+|---|---|
+| ![Landing](docs/demo/screenshots/01-landing.webp) | ![Review](docs/demo/screenshots/05-review-strategy.webp) |
+| **Landing** with a one-click sample brief | **Human review** of the launch strategy |
+| ![Edit](docs/demo/screenshots/06-edit-form-generated-from-schema.webp) | ![Document](docs/demo/screenshots/11-results-document.webp) |
+| **Edit** form generated from the agent's schema | **Document** view, copy and Markdown download |
+
+```bash
+make local        # API with the fake model
+source scripts/local_env.sh && python3 src/data/seed.py --demo --user-id local-dev-user
+cd src/apps/web && pnpm install && NEXT_PUBLIC_DEV_BEARER_TOKEN=$(python3 ../../../scripts/dev_token.py) pnpm dev   # http://localhost:3000
+```
 
 ---
 
@@ -80,54 +102,53 @@ Product launches fail not because of bad products — but because teams lack the
          │
          ▼
 ╔════════════════════════════════════════════════════════════════╗
-║                    ORCHESTRATOR AGENT                          ║
-║              claude-opus-4.6 · Extended Thinking               ║
-║      Coordinates · Validates · Manages HITL Checkpoints        ║
+║                    ORCHESTRATOR                                ║
+║      Plain control flow — it makes no model calls itself       ║
+║  Runs agents in order · saves state · pauses at HITL reviews   ║
 ╚══════╤═════════════════════════════════════════╤══════════════╝
        │                                         │
        ▼                                         ▼
 ┌──────────────────┐               ┌──────────────────────┐
 │ MARKET           │               │ AUDIENCE INSIGHT     │
 │ INTELLIGENCE     │──────────────▶│                      │
-│                  │               │ Persona Builder      │
-│ Tavily Search    │               │ Segment Mapper       │
-│ Competitor Intel │               │ Message Hook Gen     │
-│ Trend Detection  │               │ claude-sonnet-4.6    │
-│ claude-sonnet    │               └──────────┬───────────┘
+│                  │               │ Personas             │
+│ Tavily search    │               │ Messaging framework  │
+│ Competitors      │               │ Channel picks        │
+│ Trends + sources │               │ Sonnet-tier model    │
+│ Sonnet-tier      │               └──────────┬───────────┘
 └──────────────────┘                          │
        ⚡ HITL: brief_review                  │
                               ┌───────────────▼───────────────┐
                               │       LAUNCH STRATEGY         │
                               │                               │
-                              │  90-Day Phased Plan           │
-                              │  Channel Selection            │
-                              │  Budget Allocation            │
-                              │  Risk Analysis                │
-                              │  claude-opus-4.6 + Thinking   │
+                              │  Phased plan                  │
+                              │  Channels · budget · risks    │
+                              │  Opus-tier + extended thinking│
                               └───────────────┬───────────────┘
                                     ⚡ HITL: strategy_review
                     ┌───────────────────────────────────────────┐
                     │          CONTENT GENERATION               │
                     │                                           │
                     │  Email Sequence · Social Posts · Ad Copy  │
-                    │  A/B Variants · Brand Voice Matched       │
-                    │  asyncio.gather() — 3 streams parallel    │
-                    │  claude-sonnet-4.6                        │
+                    │  A/B variants                             │
+                    │  Three streams generated concurrently     │
+                    │  Sonnet-tier model                        │
                     └───────────────────┬───────────────────────┘
                                         │
+                              ┌─────────▼──────────┐
+                              │  Launch document   │
+                              │  (export: Markdown)│
+                              └─────────┬──────────┘
+                                        │  later, on demand
                     ┌───────────────────▼───────────────────────┐
                     │        ANALYTICS & FEEDBACK               │
-                    │                                           │
-                    │  GA4 Integration · Performance Scoring    │
-                    │  Optimization Recommendations             │
-                    │  claude-haiku-4.5 (cost-optimized)        │
+                    │  Recommendations from metrics you supply  │
+                    │  Haiku-tier model (GA4 connector: planned)│
                     └───────────────────────────────────────────┘
-                                        │
-                              ┌─────────▼──────────┐
-                              │  Your Launch Brief  │
-                              │  Ready in ~4 min    │
-                              └────────────────────┘
 ```
+
+Model tiers (Opus / Sonnet / Haiku) resolve to model IDs from settings (`ANTHROPIC_MODEL_OPUS` / `_SONNET` / `_HAIKU`), so
+they can be changed without code edits. The defaults have not been checked against a live account.
 
 > **HITL (Human-in-the-Loop)** is a structural pipeline gate — not a UX feature. At a checkpoint the orchestrator stores the pending review in the database and *stops* (no worker is held while waiting). A decision arriving via `POST /api/v1/hitl/{id}/decide` is saved, schema-validated if it carries edits, and enqueues a resume that skips every agent that already finished. Resume from anywhere: browser, mobile, Slack, CLI.
 
@@ -138,13 +159,13 @@ Product launches fail not because of bad products — but because teams lack the
 | Feature | What it means |
 |---------|--------------|
 | **Multi-Agent Pipeline** | Orchestrator + 4 pipeline agents (market, audience, strategy, content) + an on-demand post-launch analytics agent. Each has a Lambda-style handler; the deployed topology is not verified |
-| **Extended Thinking** | Opus 4.6 reasons step-by-step on strategy — not pattern matching |
-| **Live SSE Streaming** | Watch agents work in real time — token by token, agent by agent |
+| **Extended Thinking** | The strategy agent is configured to use extended thinking on an Opus-tier model (not yet run against the real API) |
+| **Live Progress** | Server-Sent Events show each agent starting, finishing and needing review, with tokens and estimated cost |
 | **Structural HITL** | Pipeline pauses at two review checkpoints. Approve, edit (schema-validated) or reject; stale clicks get a 409 instead of approving the next review blind |
-| **MCP Tool Servers** | Tavily, HubSpot, Slack, GA4 — agents use real-world data, not hallucinations |
+| **Tool Executors** | Web search (Tavily) is used by the market agent. HubSpot, Slack and GA4 executors exist behind an MCP-style interface but are not wired into the pipeline yet |
 | **Eval Gate in CI** | Every PR runs the real agents over a brief corpus (fake LLM) and gates on schema, grounding, injection and error regressions |
 | **Memory** | PostgreSQL/SQLite (launches, agent runs, HITL records) + Redis (events, rate limiting) |
-| **Parallel Content** | Email + social + ads generated simultaneously — 3× faster than sequential |
+| **Parallel Content** | Email, social and ads are generated concurrently |
 | **A/B by Default** | Every content piece ships in two variants, automatically |
 | **Grounded & Guarded** | Trend sources must be URLs the agent actually got from search; every prompt treats briefs, web pages and human edits as data, not instructions; per-launch cost budget |
 
@@ -157,12 +178,13 @@ Product launches fail not because of bad products — but because teams lack the
 | Component | Technology | Role |
 |-----------|-----------|------|
 | Agent Framework | Anthropic Claude SDK (native) | Orchestration + tool use |
-| Orchestrator | claude-opus-4.6 + Extended Thinking | Pipeline coordination + deep reasoning |
-| Market + Audience + Content | claude-sonnet-4.6 | Balanced capability + cost |
-| Analytics | claude-haiku-4.5 | Cost-optimized feedback loop |
-| Tool Protocol | MCP (Model Context Protocol) | Standardised external tool access |
-| Agent Communication | A2A Protocol | Structured inter-agent messaging |
-| Reasoning Patterns | ReAct · Chain-of-Thought · Plan-and-Execute · Evaluator-Optimizer | Per-agent cognitive strategy |
+| Orchestrator | Plain Python (no model calls) | Ordering, persistence, review checkpoints, cost budget |
+| Market + Audience + Content | Sonnet-tier model | Balanced capability + cost |
+| Strategy | Opus-tier model + extended thinking | Deeper reasoning where it matters |
+| Analytics | Haiku-tier model | Cost-optimized feedback |
+| Tools | MCP-style executor interface | Tavily search is wired; others are not yet |
+| Reliability | ReAct tool loop · schema validation with one repair retry · retries and backoff · per-launch cost budget | Keeps bad output and failures from reaching users |
+| Offline mode | Deterministic fake model (`LLM_PROVIDER=fake`) | Runs and tests the whole product with no API key |
 
 ### Backend
 
@@ -191,6 +213,8 @@ Product launches fail not because of bad products — but because teams lack the
 
 ### Infrastructure & Observability
 
+> **Designed, not deployed.** Only Sentry (when `SENTRY_DSN` is set) and the optional Langfuse eval client are in the code today. LangSmith, PostHog and the AWS/Vercel deployments below are planned and unverified.
+
 | Component | Technology |
 |-----------|-----------|
 | Frontend Hosting | Vercel — Edge Network + ISR |
@@ -208,7 +232,7 @@ Product launches fail not because of bad products — but because teams lack the
 ## Architecture Decisions
 
 <details>
-<summary><strong>Why one Lambda per agent instead of a monolith?</strong></summary>
+<summary><strong>Planned: one Lambda per agent instead of a monolith</strong> (today the agents run inside the API/worker process)</summary>
 <br/>
 Each agent is independently deployable, scalable, and observable. A slow content generation run doesn't block a market intelligence run. Agents can be hot-swapped — update a prompt, redeploy one Lambda, zero downtime. Provisioned concurrency on the orchestrator eliminates cold starts on the critical path.
 </details>
@@ -222,13 +246,13 @@ HITL is implemented at the orchestrator level — the run ends at a checkpoint a
 <details>
 <summary><strong>Why an eval gate in CI instead of just unit tests?</strong></summary>
 <br/>
-LLM outputs are non-deterministic. Unit tests with mocked Claude responses don't catch prompt regressions. The eval gate runs real Anthropic API calls against a fixed test corpus and compares relevance score, hallucination rate, and schema compliance against a locked baseline. A PR that degrades agent quality cannot merge — regardless of whether all unit tests pass.
+LLM outputs are non-deterministic, and unit tests with one mocked answer don't exercise the real agent code. The PR gate runs the real agents over a 16-brief corpus (including prompt-injection briefs) against a deterministic fake model and fails on schema, grounding, injection-leak or error regressions. It checks plumbing and safety behaviour, not model quality; a scheduled live run against the real API is meant to measure quality, but no live baseline has been recorded yet.
 </details>
 
 <details>
 <summary><strong>Why MCP tool servers instead of direct API calls?</strong></summary>
 <br/>
-MCP (Model Context Protocol) is the 2026 standard for AI-tool integration. Each tool server is self-contained with its own auth, schema validation, and rate limiting. Agents declare which tools they need — the cognitive loop handles execution. Swapping Tavily for a different search provider changes one file. Adding a new tool to any agent takes minutes.
+Each tool executor is self-contained with its own credentials and schema validation, behind an MCP-style interface. Agents declare which tools they need and the tool loop handles execution, so swapping Tavily for another search provider changes one file. (Only the Tavily executor is wired into the pipeline today.)
 </details>
 
 <details>
@@ -265,14 +289,15 @@ docker-compose up -d
 # 4. Run database migrations
 make migrate
 
-# 5. Seed demo data
-make seed
+# 5. (optional) add a finished sample launch for your user
+make seed USER_ID=<your Clerk user id>     # defaults to local-dev-user
 
 # 6. Start everything
 make dev
 ```
 
-Open **http://localhost:3000** — the demo brief is pre-loaded.
+Open **http://localhost:3000**. Sign-in uses Clerk, so set `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` in `.env`
+(the keyless route below needs neither Clerk nor Docker). This Docker route has not been verified end to end; the keyless one has.
 
 ### Try it with no API keys, Docker or Postgres
 
@@ -310,8 +335,8 @@ make local      # keyless local stack (fake LLM + SQLite + local Redis)
 make eval       # offline eval gate over the brief corpus (no keys)
 make eval-live  # same corpus against the real API (needs ANTHROPIC_API_KEY)
 make migrate    # Run Alembic migrations
-make seed       # Load demo launch data
-make demo       # migrate + seed + dev (full one-command demo)
+make seed       # Load a finished sample launch (USER_ID=... to choose the owner)
+make demo       # migrate + seed + dev (Docker route)
 ```
 
 ---
@@ -323,57 +348,56 @@ launchiq/
 │
 ├── src/
 │   ├── agents/                     # Orchestrator + 5 agents (Lambda-style handlers)
-│   │   ├── _base/                  # BaseAgent · CognitiveLoop · OutputValidator
-│   │   ├── orchestrator/           # Pipeline coordinator (Opus 4.6 + Thinking)
-│   │   ├── market_intelligence/    # Web research + competitor analysis
-│   │   ├── audience_insight/       # Persona builder + messaging framework
+│   │   ├── _base/                  # BaseAgent · CognitiveLoop · LLM client + fake · OutputValidator
+│   │   ├── orchestrator/           # Resumable pipeline: run store · dispatcher · synthesizer
+│   │   ├── market_intelligence/    # Web research + competitor analysis (sources must come from search)
+│   │   ├── audience_insight/       # Personas + messaging framework
 │   │   ├── launch_strategy/        # 90-day phased launch plan
-│   │   ├── content_generation/     # Email · social · ads (parallel)
-│   │   └── analytics_feedback/     # GA4 + performance recommendations
+│   │   ├── content_generation/     # Email · social · ads (concurrent)
+│   │   └── analytics_feedback/     # Recommendations from supplied metrics
 │   │
 │   ├── apps/
-│   │   ├── api/                    # FastAPI backend — ECS Fargate
+│   │   ├── api/                    # FastAPI backend
 │   │   │   ├── middleware/         # Auth · PII scrubber · rate limit · security headers
-│   │   │   ├── routers/            # launches · agents · hitl · integrations · health
+│   │   │   ├── routers/            # launches · agents · hitl · schemas · integrations · health
 │   │   │   ├── services/           # launch · agent · stream · hitl
-│   │   │   └── workers/            # Celery tasks
-│   │   └── web/                    # Next.js 15 frontend — Vercel
-│   │       ├── app/                # App Router — Server + Client components
-│   │       ├── components/         # agents/ · hitl/ · launch/ · ui/
+│   │   │   └── workers/            # Celery tasks + inline runner
+│   │   └── web/                    # Next.js 15 frontend
+│   │       ├── app/                # Landing · dashboard · new launch · launch workspace (tabs) · settings
+│   │       ├── components/         # agents/ · hitl/ · launch/ · ui/ · auth/
 │   │       ├── store/              # Zustand stores
-│   │       └── lib/                # api client · SSE hook · query client
+│   │       └── lib/                # api client · SSE hook · schema helpers · samples
 │   │
-│   ├── tools/                      # MCP tool servers
-│   │   ├── tavily_search/          # Web research
-│   │   ├── hubspot/                # CRM integration
-│   │   ├── slack/                  # Team notifications
-│   │   ├── ga4/                    # Analytics data
-│   │   └── internal/               # LaunchIQ session data access
+│   ├── tools/                      # Tool executors (MCP-style interface)
+│   │   ├── tavily_search/          # Web research (wired)
+│   │   ├── hubspot/ · slack/ · ga4/ · internal/   # present, not wired into the pipeline
 │   │
 │   ├── memory/
-│   │   ├── short_term/             # Redis — session state · HITL · scratchpad
-│   │   └── structured/             # PostgreSQL — launches · agents · users · HITL records
+│   │   ├── short_term/             # Redis — events (pub/sub) · session store
+│   │   └── structured/             # SQL — launches · agent runs · users · HITL records · migrations
 │   │
-│   ├── evals/                      # Eval corpus + pipeline evaluator + regression gate
-│   │   ├── framework/              # Evaluator · Scorer · Langfuse client · Reporter
-│   │   ├── metrics/                # relevance · hallucination · schema · edit_rate
-│   │   ├── suites/                 # Per-agent test cases + expected outputs
+│   ├── evals/                      # Eval corpus + evaluator + regression gate
+│   │   ├── corpus/                 # 16 briefs incl. prompt-injection cases
+│   │   ├── framework/              # Evaluator · Langfuse client
+│   │   ├── metrics/                # hallucination · schema · grounding
 │   │   └── regression/             # run_regression.py · baseline.json · update_baseline.py
 │   │
-│   └── infra/                      # AWS CDK stacks + Docker
-│       ├── aws/stacks/             # agents · api · data · secrets
-│       └── docker/                 # api · worker · mcp Dockerfiles
+│   └── infra/                      # AWS CDK stacks + Dockerfiles (designed, not deployed)
 │
 ├── docs/
+│   ├── demo/                       # Demo walkthrough + screenshots
 │   ├── 01_Product_Thinking/        # PRD · Research · Competitive · GTM · Business Model
 │   ├── 02_Technical_Feasibility/   # Architecture · Security · Implementation Plan
-│   └── 03_AI_Architecture/         # Agent Matrix · Data Flow · Agentic AI 2026
+│   ├── 03_AI_Architecture/         # Agent Matrix · Data Flow · Agentic AI 2026
+│   ├── portfolio/                  # Case study and portfolio pages
+│   └── DEPLOYMENT.md
 │
-├── .github/workflows/              # pr · deploy-staging · deploy-production · eval-scheduled
-├── docker-compose.yml              # Local dev: PostgreSQL + Redis
-├── pyproject.toml                  # Python deps (Poetry)
-├── turbo.json                      # Turborepo pipeline
-└── Makefile                        # dev · test · eval · migrate · seed · demo
+├── scripts/                        # Local stack · dev token · browser E2E tests
+├── .github/workflows/              # pr · integration · deploy-staging · deploy-production · eval-scheduled
+├── docker-compose.yml              # PostgreSQL + Redis
+├── pyproject.toml · poetry.lock    # Python project settings and locked dependencies
+├── pnpm-workspace.yaml             # Node workspace
+└── Makefile                        # local · dev · test · eval · migrate · seed · demo
 ```
 
 ---
@@ -387,6 +411,7 @@ launchiq/
 | [Competitive Analysis](docs/01_Product_Thinking/03_Competitive_Analysis.md) | 5-competitor breakdown + differentiation matrix |
 | [GTM Strategy](docs/01_Product_Thinking/05_GTM_Strategy.md) | Channels, pricing tiers, launch phases |
 | [Business Model Canvas](docs/01_Product_Thinking/06_Business_Model_Canvas.md) | All 9 blocks + unit economics |
+| [Demo walkthrough](docs/demo/README.md) | Run it yourself in 6 minutes, with exact inputs and screenshots |
 | [Technical Architecture](docs/02_Technical_Feasibility/01_Technical_Architecture.md) | 13-layer system architecture |
 | [Security & Compliance](docs/02_Technical_Feasibility/05_Security_Compliance.md) | OWASP, GDPR, CCPA, SOC2 readiness |
 | [E2E Product Architecture](docs/02_Technical_Feasibility/06_End_to_End_Product_Architecture.md) | Request flow, scalability, cost model |
@@ -477,16 +502,16 @@ Rough estimate: about 7-9 days with reuse versus 12-14 from scratch; the minimum
 This project demonstrates end-to-end production proficiency across:
 
 **AI Engineering**
-Multi-agent orchestration · Extended thinking (Opus 4.6) · MCP protocol · HITL design · Eval frameworks · Cognitive loop patterns (ReAct · Plan-and-Execute · Evaluator-Optimizer) · Prompt engineering with schema enforcement · Hallucination detection
+Multi-agent orchestration · Resumable human-in-the-loop workflows · Tool-use loops (ReAct) with validate-and-repair retries · Prompt-injection defences · Source grounding · Offline eval gate with adversarial cases · Cost budgets · Deterministic fake-model testing
 
 **Backend Engineering**
 FastAPI async architecture · SQLAlchemy 2.x async · Celery distributed tasks · Redis pub/sub · JWT auth middleware · Rate limiting · PII scrubbing pipeline · SSE streaming · Pydantic v2 validation
 
 **Frontend Engineering**
-Next.js 15 App Router · React 19 Server Components · Partial Prerendering · Zustand v5 + TanStack Query v5 · Tailwind CSS v4 · Real-time SSE integration · React Hook Form + Zod · openapi-typescript end-to-end types
+Next.js 15 App Router · React 19 · TanStack Query v5 + Zustand · Authenticated live streaming with `fetch` · Forms generated from JSON Schema · Accessible, responsive custom design system · Playwright browser tests
 
 **DevOps & Cloud**
-AWS CDK v2 IaC · Lambda per-service architecture · ECS Fargate · Multi-stage Dockerfiles · GitHub Actions CI/CD with eval gates · Alembic migrations · Observability stack (LangSmith + Langfuse + Sentry + PostHog)
+GitHub Actions CI with lint, type-check, tests and an eval gate · Alembic migrations (verified on SQLite) · Keyless local stack · AWS CDK stacks and Dockerfiles (designed, not deployed) · Sentry
 
 **Product Thinking**
 Full PRD · Competitive analysis · GTM strategy · User research · Business model canvas — demonstrating product judgment alongside engineering skill
@@ -497,13 +522,15 @@ Full PRD · Competitive analysis · GTM strategy · User research · Business mo
 
 ## For Investors
 
-**Market** — $4.2B product management tools market, 18% YoY growth. Every product team launches products. No AI-native solution connects research → strategy → content in one pipeline at this quality level.
+> The figures below are planning estimates from the business docs, not measurements. No live run with a real model has been recorded yet.
 
-**Moat** — Agent eval baselines + brand voice memory create a data flywheel. The product improves with every launch. MCP tool integrations (HubSpot, Slack, GA4) create workflow lock-in.
+**Market** — product management and launch tooling; sizing and growth figures are in the business docs and have not been independently verified. The gap LaunchIQ targets: no tool connects research → strategy → content in one reviewed pipeline.
 
-**Unit Economics** — Claude Haiku for analytics, Sonnet for research, Opus only where deep reasoning is needed. Estimated API cost per launch: ~$0.40. Target pricing: $49–199/month.
+**Moat (planned)** — eval baselines and, later, brand-voice memory from past launches. Neither a live baseline nor brand-voice learning exists yet.
 
-**Architecture** — Built Lambda-first. Each agent scales to zero when idle. Compute costs scale with usage, not headcount.
+**Unit economics (estimate)** — a cheaper model for analytics, a mid-tier model for research and content, and the top tier only for strategy. A cost-per-launch estimate of ~$0.40 and a target price of $49–199/month are assumptions to validate; the app already records tokens and estimated cost per launch to measure it.
+
+**Architecture** — designed to deploy one function per agent on AWS so that compute scales with usage; today everything runs in one API and worker process.
 
 > Full business model: [Business Model Canvas](docs/01_Product_Thinking/06_Business_Model_Canvas.md)
 
@@ -513,7 +540,7 @@ Full PRD · Competitive analysis · GTM strategy · User research · Business mo
 
 ---
 
-**Built with the Anthropic Claude SDK · Deployed on AWS · Designed for 2026**
+**Built with the Anthropic Claude SDK · Designed for AWS · 2026**
 
 <br/>
 
@@ -530,5 +557,3 @@ If LaunchIQ solves a problem you care about —<br/>as a customer, investor, co-
 <sub>Made with care by **Venkata Anil Kumar** · © 2026 LaunchIQ · MIT License</sub>
 
 </div>
-
-<!-- quickdraw-doc-touch -->
