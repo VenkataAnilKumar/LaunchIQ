@@ -34,7 +34,7 @@ migrate:
 	cd src/memory/structured && alembic upgrade head
 
 seed:
-	python src/data/seed.py --demo
+	python src/data/seed.py --demo --user-id $(or $(USER_ID),local-dev-user)
 
 demo:
 	$(MAKE) migrate
