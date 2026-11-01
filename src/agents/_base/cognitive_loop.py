@@ -2,8 +2,8 @@
 CognitiveLoop — ReAct + optional reflection tool loop for LaunchIQ agents.
 
 Implements the Perceive → Reason → Act → Validate → Reflect cycle with:
-- Tool execution (with error isolation)
-- Soft truncation of large tool results
+- Tool execution (with error isolation and optional timeout)
+- Soft truncation of large tool results (configurable limit)
 - Configurable API retries for transient failures
 - Token / latency / tool-success observability logging
 - Optional post-generation reflection pass
@@ -17,6 +17,7 @@ Public surface:
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import time
@@ -41,6 +42,8 @@ class LoopConfig:
     enable_reflection: bool = True
     max_api_retries: int = 1
     cost_budget_usd: float | None = None
+    tool_result_char_limit: int = 2000
+    tool_timeout_seconds: float | None = None
     # Internal counters (populated during run; useful for tests / callers)
     total_tool_calls: int = 0
     tool_error_count: int = 0
@@ -227,14 +230,32 @@ async def run_tool_loop(
                 inp = getattr(tu, "input", {}) or {}
                 tool_id = getattr(tu, "id", None)
                 try:
-                    raw = await tool_executor.execute(name, inp) if hasattr(tool_executor, "execute") else await tool_executor(name, inp)
-                    truncated = _truncate_tool_result(raw)
+                    if hasattr(tool_executor, "execute"):
+                        raw_coro = tool_executor.execute(name, inp)
+                    else:
+                        raw_coro = tool_executor(name, inp)
+                    if cfg.tool_timeout_seconds is not None:
+                        raw = await asyncio.wait_for(raw_coro, timeout=cfg.tool_timeout_seconds)
+                    else:
+                        raw = await raw_coro
+                    truncated = _truncate_tool_result(raw, limit=cfg.tool_result_char_limit)
                     tool_results.append({
                         "type": "tool_result",
                         "tool_use_id": tool_id,
                         "content": json.dumps(truncated, default=str) if not isinstance(truncated, str) else truncated,
                     })
                     tool_log.append({"tool_name": name, "input": inp, "output": truncated})
+                except asyncio.TimeoutError:
+                    cfg.tool_error_count += 1
+                    err_payload = {"error": f"tool timeout after {cfg.tool_timeout_seconds}s"}
+                    tool_results.append({
+                        "type": "tool_result",
+                        "tool_use_id": tool_id,
+                        "content": json.dumps(err_payload),
+                        "is_error": True,
+                    })
+                    tool_log.append({"tool_name": name, "input": inp, "output": err_payload})
+                    logger.warning("Tool %s timed out after %.1fs", name, cfg.tool_timeout_seconds or 0)
                 except Exception as exc:
                     cfg.tool_error_count += 1
                     err_payload = {"error": str(exc)}
