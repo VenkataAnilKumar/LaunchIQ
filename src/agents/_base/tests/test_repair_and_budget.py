@@ -6,9 +6,9 @@ from types import SimpleNamespace
 
 import pytest
 
+from src.agents._base import fake_llm
 from src.agents._base.llm import AgentError
 from src.agents.audience_insight.agent import AudienceInsightAgent
-from src.agents._base import fake_llm
 
 
 def _resp(text: str):

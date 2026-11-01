@@ -17,7 +17,12 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
-from ..services.hitl_service import CheckpointMismatchError, HITLService, InvalidEditsError, get_hitl_service
+from ..services.hitl_service import (
+    CheckpointMismatchError,
+    HITLService,
+    InvalidEditsError,
+    get_hitl_service,
+)
 from ..services.launch_service import LaunchService, get_launch_service
 from .launches import current_user
 

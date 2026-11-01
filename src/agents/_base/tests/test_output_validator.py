@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 from pydantic import BaseModel
 
-from src.agents._base.output_validator import OutputValidator, ValidationResult
+from src.agents._base.output_validator import OutputValidator
 
 
 class DummySchema(BaseModel):

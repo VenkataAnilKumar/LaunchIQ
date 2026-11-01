@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 import json
 from collections.abc import AsyncIterator
-from pathlib import Path
+from typing import ClassVar
 
 import pytest
 from fastapi import FastAPI
@@ -11,7 +11,6 @@ from fastapi.testclient import TestClient
 
 import src.apps.api.routers.integrations as integrations_router
 from src.apps.api.middleware.auth import ClerkAuthMiddleware
-
 
 app = FastAPI()
 app.add_middleware(ClerkAuthMiddleware)
@@ -40,7 +39,7 @@ class FakeSessionContext:
 
 
 class FakeRepo:
-    store: dict[str, dict[str, dict[str, object]]] = {}
+    store: ClassVar[dict[str, dict[str, dict[str, object]]]] = {}
 
     def __init__(self, _db: object) -> None:
         pass

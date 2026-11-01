@@ -1,9 +1,9 @@
 """SQLAlchemy model for User (Clerk-managed identity)."""
 from __future__ import annotations
 
-from datetime import datetime
+from sqlalchemy import JSON, Column, DateTime, String
 
-from sqlalchemy import Column, DateTime, JSON, String
+from src.memory.structured.clock import utcnow
 
 from .launch import Base
 
@@ -14,5 +14,5 @@ class User(Base):
     user_id = Column(String(255), primary_key=True)  # Clerk sub claim
     email = Column(String(255), unique=True, nullable=False)
     plan = Column(String(50), default="free")
-    integrations = Column(JSON, default=lambda: {})  # {hubspot: {...}, slack: {...}, ga4: {...}}
-    created_at = Column(DateTime, default=datetime.utcnow)
+    integrations = Column(JSON, default=dict)  # {hubspot: {...}, slack: {...}, ga4: {...}}
+    created_at = Column(DateTime, default=utcnow)

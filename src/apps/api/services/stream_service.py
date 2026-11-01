@@ -21,7 +21,7 @@ class StreamService:
 				if message["type"] == "message":
 					yield f"data: {message['data']}\n\n"
 				await asyncio.sleep(0)
-		except Exception as exc:
+		except Exception as exc:  # noqa: BLE001 - report stream errors to the client
 			yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"
 		finally:
 			await pubsub.unsubscribe(channel)

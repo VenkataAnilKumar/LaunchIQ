@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -11,6 +12,7 @@ from src.agents._base.base_agent import AgentConfig, AgentResult, BaseAgent
 from src.agents._base.llm import AgentError
 
 from .schemas import AnalyticsOutput
+
 
 def _load_prompt(name: str) -> str:
 	path = Path(__file__).parent / "prompts" / name

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 from aws_cdk import Stack
 from constructs import Construct
 
@@ -7,7 +9,7 @@ from src.infra.aws.constructs.agent_lambda import AgentLambdaConstruct
 
 
 class AgentsStack(Stack):
-	AGENTS = [
+	AGENTS: ClassVar[list[str]] = [
 		"orchestrator",
 		"market_intelligence",
 		"audience_insight",

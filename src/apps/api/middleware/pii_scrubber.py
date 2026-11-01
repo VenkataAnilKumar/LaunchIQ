@@ -35,7 +35,7 @@ class PIIScrubberMiddleware(BaseHTTPMiddleware):
 				# Keep JSON body parseable if scrubbed text changed structure.
 				try:
 					json.loads(cleaned)
-				except Exception:
+				except Exception:  # noqa: BLE001 - fall back to the unscrubbed body
 					cleaned = raw.decode("utf-8", errors="ignore")
 
 				body_bytes = cleaned.encode("utf-8")

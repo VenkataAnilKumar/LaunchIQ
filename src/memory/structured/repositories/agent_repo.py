@@ -1,13 +1,13 @@
 """Repository for AgentRun records."""
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.apps.api.models.agent import AgentRun
+from src.memory.structured.clock import utcnow
 
 
 class AgentRepository:
@@ -51,7 +51,7 @@ class AgentRepository:
         await self.db.execute(
             update(AgentRun)
             .where(AgentRun.launch_id == launch_id, AgentRun.agent_id == agent_id)
-            .values(status="running", started_at=datetime.utcnow())
+            .values(status="running", started_at=utcnow())
         )
         await self.db.commit()
 
@@ -72,7 +72,7 @@ class AgentRepository:
                 tokens_used=tokens_used,
                 cost_usd=cost_usd,
                 error=None,
-                completed_at=datetime.utcnow(),
+                completed_at=utcnow(),
             )
         )
         await self.db.commit()

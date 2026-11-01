@@ -21,7 +21,7 @@ class LangfuseClient:
 				secret_key=settings.langfuse_secret_key,
 				host=settings.langfuse_host,
 			)
-		except Exception:
+		except Exception:  # noqa: BLE001 - telemetry must never fail eval runs
 			# Keep eval execution resilient if Langfuse SDK is unavailable/misconfigured.
 			self._client = None
 
@@ -55,6 +55,6 @@ class LangfuseClient:
 			flush = getattr(self._client, "flush", None)
 			if callable(flush):
 				flush()
-		except Exception:
+		except Exception:  # noqa: BLE001 - telemetry must never fail eval runs
 			# Never fail eval runs due to telemetry side effects.
 			return

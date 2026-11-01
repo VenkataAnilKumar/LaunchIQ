@@ -5,15 +5,14 @@ SSE events are published to: launch:{launch_id}:events
 """
 from __future__ import annotations
 
+import asyncio
 import json
+import weakref
 from typing import Any
 
 import redis.asyncio as aioredis
 
 from src.apps.api.config import get_settings
-
-import asyncio
-import weakref
 
 # One client per running event loop (weakly keyed, so it dies with the loop): Celery
 # tasks call asyncio.run() repeatedly, and a connection created on a closed loop

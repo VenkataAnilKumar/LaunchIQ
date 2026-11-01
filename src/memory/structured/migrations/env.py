@@ -11,13 +11,13 @@ from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import create_engine, pool
-from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.engine import Connection
+from sqlalchemy.ext.asyncio import create_async_engine
 
-from src.apps.api.models.launch import Base
-import src.apps.api.models.agent  # noqa: F401 — register Agent model
-import src.apps.api.models.hitl  # noqa: F401 — register HITL model
+import src.apps.api.models.agent
+import src.apps.api.models.hitl
 import src.apps.api.models.user  # noqa: F401 — register User model
+from src.apps.api.models.launch import Base
 
 config = context.config
 

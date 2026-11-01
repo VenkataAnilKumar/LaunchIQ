@@ -7,7 +7,6 @@ from src.infra.aws.stacks.api_stack import ApiStack
 from src.infra.aws.stacks.data_stack import DataStack
 from src.infra.aws.stacks.secrets_stack import SecretsStack
 
-
 app = cdk.App()
 
 env_name = app.node.try_get_context("env") or "staging"

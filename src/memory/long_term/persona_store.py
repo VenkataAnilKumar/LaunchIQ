@@ -4,10 +4,10 @@ from __future__ import annotations
 import logging
 import uuid
 
-from qdrant_client.models import Filter, FieldCondition, MatchValue, PointStruct
+from qdrant_client.models import FieldCondition, Filter, MatchValue, PointStruct
 
-from src.memory.long_term.qdrant_client import get_qdrant, COLLECTION_PERSONAS
 from src.memory.long_term.embeddings import embed_text
+from src.memory.long_term.qdrant_client import COLLECTION_PERSONAS, get_qdrant
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ class PersonaStore:
                     collection_name=COLLECTION_PERSONAS,
                     points=points,
                 )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - vector store is best-effort
             logger.warning(f"Failed to save personas for {launch_id}: {e}")
 
     async def get_by_launch(self, launch_id: str) -> list[dict]:
@@ -74,7 +74,7 @@ class PersonaStore:
             )
 
             return [r.payload for r in result if r.payload]
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - vector store is best-effort
             logger.warning(f"Failed to get personas for {launch_id}: {e}")
             return []
 
@@ -91,6 +91,6 @@ class PersonaStore:
                 limit=limit,
             )
             return [r.payload for r in results if r.payload]
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - vector store is best-effort
             logger.warning(f"Failed to find similar personas: {e}")
             return []

@@ -40,7 +40,7 @@ def _extract_plain_credentials(record: Any) -> dict[str, Any] | None:
 def _build_encrypted_record(previous: dict[str, Any], credentials: dict[str, Any]) -> dict[str, Any]:
     configured_fields = previous.get("configured_fields")
     if not isinstance(configured_fields, list):
-        configured_fields = sorted(str(key) for key in credentials.keys())
+        configured_fields = sorted(str(key) for key in credentials)
 
     return {
         "status": previous.get("status") or "connected",

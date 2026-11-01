@@ -4,10 +4,10 @@ from __future__ import annotations
 import logging
 import uuid
 
-from qdrant_client.models import Filter, FieldCondition, MatchValue, PointStruct
+from qdrant_client.models import FieldCondition, Filter, MatchValue, PointStruct
 
-from src.memory.long_term.qdrant_client import get_qdrant, COLLECTION_MARKET_DATA
 from src.memory.long_term.embeddings import embed_text
+from src.memory.long_term.qdrant_client import COLLECTION_MARKET_DATA, get_qdrant
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class MarketDataStore:
                 collection_name=COLLECTION_MARKET_DATA,
                 points=[point],
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - vector store is best-effort
             logger.warning(f"Failed to save market data for {launch_id}: {e}")
 
     async def get(self, launch_id: str) -> dict | None:
@@ -70,7 +70,7 @@ class MarketDataStore:
             if result:
                 return result[0].payload
             return None
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - vector store is best-effort
             logger.warning(f"Failed to get market data for {launch_id}: {e}")
             return None
 
@@ -85,6 +85,6 @@ class MarketDataStore:
                 limit=limit,
             )
             return [r.payload for r in results if r.payload]
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - vector store is best-effort
             logger.warning(f"Failed to search market data: {e}")
             return []

@@ -4,10 +4,10 @@ from __future__ import annotations
 import logging
 import uuid
 
-from qdrant_client.models import Filter, FieldCondition, MatchValue, PointStruct
+from qdrant_client.models import FieldCondition, Filter, MatchValue, PointStruct
 
-from src.memory.long_term.qdrant_client import get_qdrant, COLLECTION_BRAND_VOICE
 from src.memory.long_term.embeddings import embed_text
+from src.memory.long_term.qdrant_client import COLLECTION_BRAND_VOICE, get_qdrant
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ class BrandVoiceStore:
                 collection_name=COLLECTION_BRAND_VOICE,
                 points=[point],
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - vector store is best-effort
             logger.warning(f"Failed to save brand voice for {launch_id}: {e}")
 
     async def get(self, launch_id: str) -> dict | None:
@@ -67,7 +67,7 @@ class BrandVoiceStore:
             if result:
                 return result[0].payload
             return None
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - vector store is best-effort
             logger.warning(f"Failed to get brand voice for {launch_id}: {e}")
             return None
 
@@ -84,6 +84,6 @@ class BrandVoiceStore:
                 limit=limit,
             )
             return [r.payload for r in results if r.payload]
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - vector store is best-effort
             logger.warning(f"Failed to find similar brand voices: {e}")
             return []

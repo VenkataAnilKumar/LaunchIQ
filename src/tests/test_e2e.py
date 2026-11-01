@@ -9,7 +9,6 @@ from pathlib import Path
 import httpx
 import pytest
 
-
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 DEMO_LAUNCH_PATH = Path(__file__).resolve().parents[1] / "data" / "demo" / "demo_launch.json"
 
@@ -33,7 +32,7 @@ def _load_demo_launch() -> dict[str, object]:
 def test_full_pipeline_e2e() -> None:
     try:
         health = httpx.get(f"{API_BASE_URL}/api/v1/health", timeout=10)
-    except Exception as exc:  # pragma: no cover
+    except Exception as exc:  # pragma: no cover  # noqa: BLE001 - skip when API is unreachable
         pytest.skip(f"API is not reachable at {API_BASE_URL}: {exc}")
 
     if health.status_code != 200:  # pragma: no cover

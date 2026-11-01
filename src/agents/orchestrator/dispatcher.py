@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 import importlib
-from typing import Any
+from typing import Any, ClassVar
 
 from src.agents._base.base_agent import AgentResult
 
 
 class AgentDispatcher:
-	AGENT_MODULE_MAP: dict[str, str] = {
+	AGENT_MODULE_MAP: ClassVar[dict[str, str]] = {
 		"market_intelligence": "src.agents.market_intelligence.agent",
 		"audience_insight": "src.agents.audience_insight.agent",
 		"launch_strategy": "src.agents.launch_strategy.agent",

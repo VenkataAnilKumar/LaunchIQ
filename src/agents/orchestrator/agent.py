@@ -10,14 +10,14 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any, ClassVar
 
 from pydantic import BaseModel
 
 from src.agents._base.base_agent import AgentConfig, AgentResult, BaseAgent
-from src.agents._base.llm import BudgetExceededError
 from src.apps.api.config import get_settings
 from src.memory.short_term.session_store import SessionStore
 
@@ -43,13 +43,13 @@ def _load_system_prompt() -> str:
 
 
 class OrchestratorAgent(BaseAgent):
-	PIPELINE_SEQUENCE = [
+	PIPELINE_SEQUENCE: ClassVar[list[str]] = [
 		"market_intelligence",
 		"audience_insight",
 		"launch_strategy",
 		"content_generation",
 	]
-	HITL_AFTER = {
+	HITL_AFTER: ClassVar[dict[str, str]] = {
 		"market_intelligence": "brief_review",
 		"launch_strategy": "strategy_review",
 	}
@@ -101,7 +101,7 @@ class OrchestratorAgent(BaseAgent):
 					)
 				try:
 					result = await self._run_agent(launch_id, agent_id, payload, outputs)
-				except Exception as exc:
+				except Exception as exc:  # noqa: BLE001 - boundary: any agent/event failure is recorded, never crashes the run
 					return await self._finish(launch_id, "failed", outputs, spent, reason=str(exc), agent_id=agent_id)
 				outputs[agent_id] = result.output
 				spent += result.cost_usd
@@ -161,7 +161,7 @@ class OrchestratorAgent(BaseAgent):
 					},
 				)
 				return result
-			except Exception as exc:  # noqa: PERF203
+			except Exception as exc:  # noqa: BLE001 - boundary: any agent/event failure is recorded, never crashes the run
 				last_error = exc
 				logger.warning("Agent %s attempt %d/%d failed: %s", agent_id, attempt, self._attempts, exc)
 
@@ -225,7 +225,7 @@ class OrchestratorAgent(BaseAgent):
 		try:
 			store = self._session_store or SessionStore()
 			await store.publish(f"launch:{launch_id}:events", event)
-		except Exception:
+		except Exception:  # noqa: BLE001 - boundary: any agent/event failure is recorded, never crashes the run
 			logger.warning("Failed to publish event", extra={"launch_id": launch_id, "event_type": event.get("type")})
 
 	async def stream(self, payload: dict[str, Any]) -> AsyncIterator[str]:

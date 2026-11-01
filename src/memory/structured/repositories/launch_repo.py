@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
 from typing import Any
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.apps.api.models.launch import Launch, LaunchStatus
+from src.memory.structured.clock import utcnow
 
 
 class LaunchRepository:
@@ -45,7 +45,7 @@ class LaunchRepository:
         await self.db.execute(
             update(Launch)
             .where(Launch.launch_id == launch_id)
-            .values(status=status, updated_at=datetime.utcnow())
+            .values(status=status, updated_at=utcnow())
         )
         await self.db.commit()
 
@@ -53,6 +53,6 @@ class LaunchRepository:
         await self.db.execute(
             update(Launch)
             .where(Launch.launch_id == launch_id)
-            .values(brief_output=output, updated_at=datetime.utcnow())
+            .values(brief_output=output, updated_at=utcnow())
         )
         await self.db.commit()

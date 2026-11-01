@@ -5,7 +5,7 @@ context limit without discarding the most recent user message.
 """
 from __future__ import annotations
 
-from .token_counter import estimate_messages_tokens, estimate_tokens
+from .token_counter import estimate_messages_tokens
 
 
 def truncate_to_budget(text: str, max_tokens: int) -> str:

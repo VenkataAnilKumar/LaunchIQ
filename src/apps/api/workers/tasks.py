@@ -40,7 +40,7 @@ async def execute_orchestrator(launch_id: str) -> dict[str, Any]:
 					"timestamp": datetime.now(UTC).isoformat(),
 				},
 			)
-		except Exception:
+		except Exception:  # noqa: BLE001 - best-effort event publish before re-raising
 			logger.warning("Could not publish failure event for %s", launch_id)
 		raise
 	return {"status": str(result.output.get("status")), "launch_id": launch_id}

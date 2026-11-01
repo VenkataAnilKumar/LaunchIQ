@@ -16,7 +16,11 @@ from src.agents.audience_insight.schemas import AudienceInsightOutput
 from src.agents.content_generation.schemas import ContentBundle
 from src.agents.launch_strategy.schemas import LaunchStrategyOutput
 from src.agents.market_intelligence.schemas import MarketIntelligenceOutput
-from src.evals.metrics.grounding import citation_coverage, leaked_forbidden_text, product_mention
+from src.evals.metrics.grounding import (
+	citation_coverage,
+	leaked_forbidden_text,
+	product_mention,
+)
 from src.evals.metrics.hallucination import HallucinationScorer
 from src.evals.metrics.schema_compliance import SchemaComplianceScorer
 
@@ -64,7 +68,7 @@ class Evaluator:
 				payload["prior_outputs"] = dict(prior)
 				try:
 					result = await dispatcher.dispatch_result(agent_id, payload)
-				except Exception as exc:  # recorded as an error row; never hides failures
+				except Exception as exc:  # recorded as an error row; never hides failures  # noqa: BLE001 - recorded as an error row
 					if agent_id in rows:
 						rows[agent_id].append({"brief": brief["id"], "error": f"{type(exc).__name__}: {exc}"})
 					break  # downstream agents depend on this output

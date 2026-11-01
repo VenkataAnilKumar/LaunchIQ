@@ -1,9 +1,9 @@
 """SQLAlchemy model for HITL checkpoint records."""
 from __future__ import annotations
 
-from datetime import datetime
+from sqlalchemy import JSON, Column, DateTime, String, Text
 
-from sqlalchemy import Column, DateTime, JSON, String, Text
+from src.memory.structured.clock import utcnow
 
 from .launch import Base
 
@@ -19,5 +19,5 @@ class HITLCheckpointRecord(Base):
     decision = Column(String(50), nullable=True)  # approve / edit / reject
     edits = Column(JSON, nullable=True)
     comment = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
     resolved_at = Column(DateTime, nullable=True)

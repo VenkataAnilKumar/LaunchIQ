@@ -7,8 +7,7 @@ GET  /launches/{id}/stream — SSE stream of agent progress
 """
 from __future__ import annotations
 
-import uuid
-from typing import Annotated, AsyncIterator
+from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import PlainTextResponse, StreamingResponse

@@ -100,7 +100,7 @@ class HITLService:
 		}
 		try:
 			await session.publish(f"launch:{launch_id}:events", event)
-		except Exception:
+		except Exception:  # noqa: BLE001 - best-effort event publish
 			# Streaming is best-effort; the decision is already durable.
 			logger.warning("Could not publish hitl_resolved for %s", launch_id)
 

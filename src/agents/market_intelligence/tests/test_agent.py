@@ -10,7 +10,7 @@ from src.agents.market_intelligence.schemas import MarketIntelligenceOutput
 async def test_agent_validates_schema(monkeypatch) -> None:
 		agent = MarketIntelligenceAgent()
 
-		async def fake_call(messages, tool_executor):  # noqa: ANN001
+		async def fake_call(messages, tool_executor):
 				_ = messages
 				_ = tool_executor
 				text = """```json

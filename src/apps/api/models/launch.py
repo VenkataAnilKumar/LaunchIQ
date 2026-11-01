@@ -4,11 +4,12 @@ Also defines Base (DeclarativeBase) — all other models import from here.
 """
 from __future__ import annotations
 
-from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import Column, DateTime, JSON, String, Text
+from sqlalchemy import JSON, Column, DateTime, String, Text
 from sqlalchemy.orm import DeclarativeBase
+
+from src.memory.structured.clock import utcnow
 
 
 class Base(DeclarativeBase):
@@ -33,8 +34,8 @@ class Launch(Base):
     product_name = Column(String(255), nullable=False)
     description = Column(Text, nullable=False)
     target_market = Column(String(255), nullable=False)
-    competitors = Column(JSON, default=lambda: [])
+    competitors = Column(JSON, default=list)
     launch_date = Column(String(50), nullable=True)
     brief_output = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
