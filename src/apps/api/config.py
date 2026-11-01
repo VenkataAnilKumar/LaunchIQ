@@ -32,10 +32,6 @@ class Settings(BaseSettings):
     # Redis
     redis_url: str = "redis://localhost:6379/0"
 
-    # Qdrant
-    qdrant_url: str = "http://localhost:6333"
-    qdrant_api_key: str = ""
-
     # Anthropic / LLM
     anthropic_api_key: str = ""
     # "anthropic" (real API) or "fake" (deterministic offline client for local runs/tests)
@@ -49,9 +45,6 @@ class Settings(BaseSettings):
     # Tavily / web search. "tavily" or "fake" (canned offline results).
     tavily_api_key: str = ""
     search_provider: str = "tavily"
-
-    # OpenAI (embeddings via text-embedding-3-small)
-    openai_api_key: str = ""
 
     # Observability
     langfuse_public_key: str = ""

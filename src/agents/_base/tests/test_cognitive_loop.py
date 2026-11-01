@@ -6,7 +6,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.agents._base.cognitive_loop import LoopConfig, run_tool_loop, _truncate_tool_result
+from src.agents._base.cognitive_loop import (
+    LoopConfig,
+    _truncate_tool_result,
+    run_tool_loop,
+)
 
 
 @pytest.mark.asyncio
@@ -96,7 +100,7 @@ async def test_max_iterations_warning_path():
     mock_executor.execute = AsyncMock(return_value={"ok": True})
 
     params = {"messages": []}
-    text, tools, _ = await run_tool_loop(
+    _text, tools, _ = await run_tool_loop(
         mock_client, params, tool_executor=mock_executor, config=LoopConfig(max_iterations=2, enable_reflection=False)
     )
 
@@ -133,7 +137,7 @@ async def test_api_retry_on_transient_failure():
     mock_client.messages.create.side_effect = [RuntimeError("rate limited"), success_resp]
 
     params = {"messages": [{"role": "user", "content": "test"}]}
-    text, tools, _ = await run_tool_loop(
+    text, _tools, _ = await run_tool_loop(
         mock_client,
         params,
         tool_executor=None,

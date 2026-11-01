@@ -64,7 +64,7 @@ def _tool_result_urls(messages: list[dict[str, Any]]) -> list[str]:
 
 def _market(name: str, urls: list[str] | None = None) -> dict[str, Any]:
     urls = urls or []
-    src = lambda i: urls[i] if i < len(urls) else None  # noqa: E731
+    src = lambda i: urls[i] if i < len(urls) else None
     return {
         "market_size": "$4.2B globally (fake data)",
         "growth_rate": "18% CAGR (fake data)",

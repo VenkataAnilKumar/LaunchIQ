@@ -1,6 +1,6 @@
 .PHONY: dev local local-celery local-down local-status test eval eval-live migrate seed demo
 
-# --- Full stack with Docker (Postgres + Redis + Qdrant) ---
+# --- Full stack with Docker (Postgres + Redis) ---
 dev:
 	docker-compose up -d
 	pnpm install

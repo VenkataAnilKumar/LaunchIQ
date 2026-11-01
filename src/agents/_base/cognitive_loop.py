@@ -107,7 +107,7 @@ def _truncate_tool_result(result: Any, limit: int = _TOOL_RESULT_CHAR_LIMIT) -> 
             "original_length": len(serialized),
             "preview": serialized[: limit - 80] + "...",
         }
-    except Exception:
+    except Exception:  # noqa: BLE001 - boundary: tool/reflection failures must not crash the loop
         # Fail open: return original if we cannot measure/truncate
         return result
 
@@ -147,7 +147,7 @@ async def _maybe_reflect(
             logger.info("CognitiveLoop reflection improved the draft (len %d -> %d)", len(final_text), len(improved))
             return improved
         return final_text
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - boundary: tool/reflection failures must not crash the loop
         logger.warning("Reflection pass failed (non-fatal): %s", exc)
         return final_text
 
@@ -266,7 +266,7 @@ async def run_tool_loop(
                         "content": json.dumps(truncated, default=str) if not isinstance(truncated, str) else truncated,
                     })
                     tool_log.append({"tool_name": name, "input": inp, "output": truncated})
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     cfg.tool_error_count += 1
                     err_payload = {"error": f"tool timeout after {cfg.tool_timeout_seconds}s"}
                     tool_results.append({
@@ -277,7 +277,7 @@ async def run_tool_loop(
                     })
                     tool_log.append({"tool_name": name, "input": inp, "output": err_payload})
                     logger.warning("Tool %s timed out after %.1fs", name, cfg.tool_timeout_seconds or 0)
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001 - boundary: tool/reflection failures must not crash the loop
                     cfg.tool_error_count += 1
                     err_payload = {"error": str(exc)}
                     tool_results.append({

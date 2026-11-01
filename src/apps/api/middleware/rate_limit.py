@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class RateLimitMiddleware(BaseHTTPMiddleware):
 	async def dispatch(self, request: Request, call_next):  # type: ignore[override]
 		path = request.url.path
-		if path.startswith("/api/v1/health") or path.startswith("/docs") or path.endswith("/stream"):
+		if path.startswith(("/api/v1/health", "/docs")) or path.endswith("/stream"):
 			return await call_next(request)
 
 		settings = get_settings()
@@ -31,7 +31,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 			count = await redis.incr(key)
 			if int(count) == 1:
 				await redis.expire(key, settings.rate_limit_window)
-		except Exception as exc:
+		except Exception as exc:  # noqa: BLE001 - fail open when Redis is unavailable
 			logger.warning("Rate limiter unavailable; allowing request: %s", exc)
 			return await call_next(request)
 

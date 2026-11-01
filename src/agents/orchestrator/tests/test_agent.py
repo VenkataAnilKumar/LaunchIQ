@@ -98,7 +98,7 @@ async def test_downstream_agents_receive_prior_outputs() -> None:
 
 @pytest.mark.asyncio
 async def test_reject_halts_pipeline() -> None:
-	agent, store, disp, session = make()
+	agent, store, disp, _session = make()
 	await agent.run(PAYLOAD)
 	store.resolve("L1", "brief_review", "reject")
 	result = await agent.run(PAYLOAD)
@@ -110,7 +110,7 @@ async def test_reject_halts_pipeline() -> None:
 @pytest.mark.asyncio
 async def test_agent_is_retried_once_then_succeeds() -> None:
 	disp = FakeDispatcher(fail={"market_intelligence": 1})
-	agent, store, _, _ = make(disp)
+	agent, _store, _, _ = make(disp)
 	result = await agent.run(PAYLOAD)
 	assert result.output["status"] == "hitl_pending"
 	assert disp.calls.count("market_intelligence") == 2

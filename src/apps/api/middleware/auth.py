@@ -74,7 +74,7 @@ class ClerkAuthMiddleware(BaseHTTPMiddleware):
 			if not isinstance(user_id, str) or not user_id:
 				raise ValueError("JWT payload missing sub")
 			request.state.user_id = user_id
-		except Exception:
+		except Exception:  # noqa: BLE001 - any token problem is a 401
 			return JSONResponse({"error": "invalid_token"}, status_code=401)
 
 		return await call_next(request)

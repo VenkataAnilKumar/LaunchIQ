@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
 from typing import Any
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.apps.api.models.hitl import HITLCheckpointRecord
+from src.memory.structured.clock import utcnow
 
 
 class HITLRepository:
@@ -52,7 +52,7 @@ class HITLRepository:
                 decision=decision,
                 edits=edits,
                 comment=comment,
-                resolved_at=datetime.utcnow(),
+                resolved_at=utcnow(),
             )
         )
         await self.db.commit()
@@ -92,7 +92,7 @@ class HITLRepository:
                 HITLCheckpointRecord.id == record_id,
                 HITLCheckpointRecord.decision.is_(None),
             )
-            .values(decision=decision, edits=edits, comment=comment, resolved_at=datetime.utcnow())
+            .values(decision=decision, edits=edits, comment=comment, resolved_at=utcnow())
         )
         await self.db.commit()
         return result.rowcount > 0

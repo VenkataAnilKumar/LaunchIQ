@@ -1,20 +1,23 @@
 """Repository for User records and integration credential storage."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.apps.api.models.user import User
-from src.apps.api.services.credentials_crypto import decrypt_credentials, encrypt_credentials
+from src.apps.api.services.credentials_crypto import (
+    decrypt_credentials,
+    encrypt_credentials,
+)
 
 INTEGRATION_NAMES = ("hubspot", "slack", "ga4")
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _coerce_integration_record(value: Any) -> dict[str, Any]:
@@ -41,7 +44,7 @@ def _coerce_integration_record(value: Any) -> dict[str, Any]:
             credentials = {}
         configured_fields = value.get("configured_fields")
         if not isinstance(configured_fields, list):
-            configured_fields = sorted(str(key) for key in credentials.keys())
+            configured_fields = sorted(str(key) for key in credentials)
         return {
             "status": "connected" if credentials else "disconnected",
             "connected_at": value.get("connected_at"),
@@ -61,7 +64,7 @@ def _coerce_integration_record(value: Any) -> dict[str, Any]:
             "updated_at": None,
             "disconnected_at": None,
             "last_error": None,
-            "configured_fields": sorted(str(key) for key in credentials.keys()),
+            "configured_fields": sorted(str(key) for key in credentials),
             "credentials": credentials,
             "encrypted_credentials": None,
         }
@@ -145,7 +148,7 @@ class UserRepository:
             "updated_at": now,
             "disconnected_at": None,
             "last_error": None,
-            "configured_fields": sorted(str(key) for key in credentials.keys()),
+            "configured_fields": sorted(str(key) for key in credentials),
             "encrypted_credentials": encrypted_credentials,
         }
 

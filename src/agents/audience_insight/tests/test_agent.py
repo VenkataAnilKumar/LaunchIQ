@@ -24,7 +24,7 @@ async def test_audience_agent_validates_schema(monkeypatch) -> None:
 			self.content = [_TextBlock(text)]
 			self.usage = _Usage()
 
-	def fake_create(**kwargs):  # noqa: ANN003
+	def fake_create(**kwargs):
 		_ = kwargs
 		return _Response(
 			"""```json

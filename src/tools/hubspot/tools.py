@@ -15,8 +15,8 @@ class HubSpotExecutor(BaseMCPServer):
 
     async def execute(self, tool_name: str, inputs: dict[str, Any]) -> dict[str, Any]:
         try:
-            client = get_hubspot_client(self.api_key)
-        except Exception:
+            get_hubspot_client(self.api_key)  # validates the credentials; the client itself is not reused here
+        except Exception:  # noqa: BLE001 - report any auth failure as auth_failed
             return {"error": "auth_failed"}
 
         if tool_name == "create_contact":

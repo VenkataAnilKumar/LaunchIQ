@@ -3,8 +3,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -120,7 +121,7 @@ class ContentGenerationAgent(BaseAgent):
 		payload = extract_json(text)
 		items = payload.get("items", [])
 		if not isinstance(items, list):
-			raise ValueError("Content generation expected list in 'items'")
+			raise TypeError("Content generation expected list in 'items'")
 		return items
 
 

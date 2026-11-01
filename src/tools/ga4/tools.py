@@ -16,7 +16,7 @@ class GA4Executor(BaseMCPServer):
     async def execute(self, tool_name: str, inputs: dict[str, Any]) -> dict[str, Any]:
         try:
             _client = get_ga4_client(self.credentials)
-        except Exception:
+        except Exception:  # noqa: BLE001 - report any auth failure as auth_failed
             return {"error": "auth_failed"}
 
         if tool_name == "ga4_get_metrics":

@@ -10,7 +10,7 @@ from src.agents.content_generation.schemas import ContentBundle
 async def test_content_generation_agent_validates_bundle(monkeypatch) -> None:
 	agent = ContentGenerationAgent()
 
-	async def fake_emails(strategy, personas):  # noqa: ANN001
+	async def fake_emails(strategy, personas):
 		_ = strategy
 		_ = personas
 		return [
@@ -19,7 +19,7 @@ async def test_content_generation_agent_validates_bundle(monkeypatch) -> None:
 			{"format": "email", "variant": "a", "headline": "H3", "body": "B3", "cta": "C3", "target_persona": "PMM"},
 		]
 
-	async def fake_social(strategy, personas):  # noqa: ANN001
+	async def fake_social(strategy, personas):
 		_ = strategy
 		_ = personas
 		return [
@@ -28,7 +28,7 @@ async def test_content_generation_agent_validates_bundle(monkeypatch) -> None:
 			{"format": "linkedin", "variant": "a", "headline": "S3", "body": "SB3", "cta": "SC3", "target_persona": "Founder"},
 		]
 
-	async def fake_ads(strategy, personas):  # noqa: ANN001
+	async def fake_ads(strategy, personas):
 		_ = strategy
 		_ = personas
 		return [

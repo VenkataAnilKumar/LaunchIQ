@@ -8,7 +8,7 @@ from typing import Any
 from .agent import OrchestratorAgent
 
 
-def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:  # noqa: ARG001
+def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
 	payload = event.get("payload", event)
 	result = asyncio.run(OrchestratorAgent().run(payload))
 	return {

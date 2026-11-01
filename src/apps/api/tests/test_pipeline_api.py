@@ -22,7 +22,7 @@ BRIEF = {
 
 
 def token(user: str) -> dict[str, str]:
-	enc = lambda d: base64.urlsafe_b64encode(json.dumps(d).encode()).decode().rstrip("=")  # noqa: E731
+	enc = lambda d: base64.urlsafe_b64encode(json.dumps(d).encode()).decode().rstrip("=")
 	return {"Authorization": f"Bearer {enc({'alg': 'none'})}.{enc({'sub': user})}.x"}
 
 

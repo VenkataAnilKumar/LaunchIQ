@@ -2,18 +2,15 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from src.agents.orchestrator.synthesizer import build_brief
+from src.memory.structured.clock import utcnow
 from src.memory.structured.database import AsyncSessionLocal
-from src.memory.structured.repositories.hitl_repo import HITLRepository
 from src.memory.structured.repositories.agent_repo import AgentRepository
+from src.memory.structured.repositories.hitl_repo import HITLRepository
 from src.memory.structured.repositories.launch_repo import LaunchRepository
 from src.packages.config.models import PIPELINE_SEQUENCE
-
-if TYPE_CHECKING:
-	from src.apps.api.models.launch import Launch
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +33,7 @@ class LaunchService:
 			for agent_id in PIPELINE_SEQUENCE:
 				await agent_repo.create(launch_id=launch.launch_id, agent_id=agent_id)
 
-			created_at = launch.created_at or datetime.utcnow()
+			created_at = launch.created_at or utcnow()
 			return {
 				"launch_id": launch.launch_id,
 				"status": _status_value(launch.status),
@@ -56,8 +53,8 @@ class LaunchService:
 					"target_market": launch.target_market,
 					"competitors": list(launch.competitors or []),
 					"launch_date": launch.launch_date,
-					"created_at": launch.created_at.isoformat() if launch.created_at else datetime.utcnow().isoformat(),
-					"updated_at": launch.updated_at.isoformat() if launch.updated_at else datetime.utcnow().isoformat(),
+					"created_at": launch.created_at.isoformat() if launch.created_at else utcnow().isoformat(),
+					"updated_at": launch.updated_at.isoformat() if launch.updated_at else utcnow().isoformat(),
 				}
 				for launch in launches
 			]

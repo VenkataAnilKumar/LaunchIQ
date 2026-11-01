@@ -10,7 +10,6 @@ from cryptography.fernet import Fernet, InvalidToken
 
 from src.apps.api.config import get_settings
 
-
 DEV_FALLBACK_KEY_SEED = "launchiq-dev-integration-key"
 
 
@@ -43,5 +42,5 @@ def decrypt_credentials(encrypted_payload: str) -> dict[str, object]:
 
     parsed = json.loads(raw.decode("utf-8"))
     if not isinstance(parsed, dict):
-        raise ValueError("Decrypted integration credentials must be an object")
+        raise TypeError("Decrypted integration credentials must be an object")
     return parsed

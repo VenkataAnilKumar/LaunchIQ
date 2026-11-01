@@ -16,7 +16,7 @@ class SlackExecutor(BaseMCPServer):
     async def execute(self, tool_name: str, inputs: dict[str, Any]) -> dict[str, Any]:
         try:
             _client = get_slack_client(self.bot_token)
-        except Exception:
+        except Exception:  # noqa: BLE001 - report any auth failure as auth_failed
             return {"error": "auth_failed"}
 
         if tool_name == "post_message":

@@ -2,7 +2,7 @@ version: "3.9"
 
 # LaunchIQ — Local Development Services
 # Run: docker-compose up -d
-# Starts: PostgreSQL, Redis, Qdrant
+# Starts: PostgreSQL, Redis
 
 services:
 
@@ -37,21 +37,6 @@ services:
       timeout: 3s
       retries: 5
 
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: launchiq_qdrant
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    volumes:
-      - qdrant_data:/qdrant/storage
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:6333/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
 volumes:
   postgres_data:
   redis_data:
-  qdrant_data:

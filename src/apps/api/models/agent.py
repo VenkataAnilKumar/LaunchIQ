@@ -1,9 +1,7 @@
 """SQLAlchemy model for agent run records."""
 from __future__ import annotations
 
-from datetime import datetime
-
-from sqlalchemy import Column, DateTime, Float, Integer, JSON, String, Text
+from sqlalchemy import JSON, Column, DateTime, Float, Integer, String, Text
 
 from .launch import Base
 

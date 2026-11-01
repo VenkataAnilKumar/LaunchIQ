@@ -143,7 +143,7 @@ Product launches fail not because of bad products — but because teams lack the
 | **Structural HITL** | Pipeline pauses at two review checkpoints. Approve, edit (schema-validated) or reject; stale clicks get a 409 instead of approving the next review blind |
 | **MCP Tool Servers** | Tavily, HubSpot, Slack, GA4 — agents use real-world data, not hallucinations |
 | **Eval Gate in CI** | Every PR runs the real agents over a brief corpus (fake LLM) and gates on schema, grounding, injection and error regressions |
-| **Memory** | PostgreSQL/SQLite (launches, agent runs, HITL records) + Redis (events, rate limiting). Qdrant modules exist but are not wired into the agents yet |
+| **Memory** | PostgreSQL/SQLite (launches, agent runs, HITL records) + Redis (events, rate limiting) |
 | **Parallel Content** | Email + social + ads generated simultaneously — 3× faster than sequential |
 | **A/B by Default** | Every content piece ships in two variants, automatically |
 | **Grounded & Guarded** | Trend sources must be URLs the agent actually got from search; every prompt treats briefs, web pages and human edits as data, not instructions; per-launch cost budget |
@@ -171,7 +171,6 @@ Product launches fail not because of bad products — but because teams lack the
 | API Framework | FastAPI 0.115 + Python 3.12 (async throughout) |
 | Task Queue | Celery 5.4 + Redis broker |
 | Database | PostgreSQL 16 via SQLAlchemy 2.x (async) |
-| Vector Store | Qdrant — modules present, not yet used by the agents |
 | Cache / Pub-Sub | Redis 7 — SSE events, rate limiting, Celery broker |
 | Auth | Clerk — JWT, OAuth, magic links |
 | Migrations | Alembic |
@@ -232,9 +231,9 @@ MCP (Model Context Protocol) is the 2026 standard for AI-tool integration. Each 
 </details>
 
 <details>
-<summary><strong>Why 3-layer memory instead of one database?</strong></summary>
+<summary><strong>Why split memory between PostgreSQL and Redis?</strong></summary>
 <br/>
-The design splits memory by job: Redis for SSE pub/sub and rate limiting, PostgreSQL for launch records, agent runs and HITL decisions (ACID), and Qdrant for semantic search over past reports and personas. <strong>Today only Redis and PostgreSQL are wired in;</strong> the Qdrant modules (`src/memory/long_term`) are not used by the agents yet.
+Redis handles SSE pub/sub, rate limiting and the Celery broker, where latency matters. PostgreSQL holds launch records, agent runs and HITL decisions, where durability matters. A vector store (for semantic search over past reports and personas) is a possible later addition once there is data worth retrieving; it was removed until then rather than left half-wired.
 </details>
 
 ---
@@ -259,7 +258,7 @@ cd launchiq
 cp .env.example .env
 # Edit .env — add your ANTHROPIC_API_KEY at minimum
 
-# 3. Start infrastructure (PostgreSQL + Redis + Qdrant)
+# 3. Start infrastructure (PostgreSQL + Redis)
 docker-compose up -d
 
 # 4. Run database migrations
@@ -352,7 +351,6 @@ launchiq/
 │   │
 │   ├── memory/
 │   │   ├── short_term/             # Redis — session state · HITL · scratchpad
-│   │   ├── long_term/              # Qdrant — market data · personas · brand voice
 │   │   └── structured/             # PostgreSQL — launches · agents · users · HITL records
 │   │
 │   ├── evals/                      # Eval corpus + pipeline evaluator + regression gate
@@ -371,7 +369,7 @@ launchiq/
 │   └── 03_AI_Architecture/         # Agent Matrix · Data Flow · Agentic AI 2026
 │
 ├── .github/workflows/              # pr · deploy-staging · deploy-production · eval-scheduled
-├── docker-compose.yml              # Local dev: PostgreSQL + Redis + Qdrant
+├── docker-compose.yml              # Local dev: PostgreSQL + Redis
 ├── pyproject.toml                  # Python deps (Poetry)
 ├── turbo.json                      # Turborepo pipeline
 └── Makefile                        # dev · test · eval · migrate · seed · demo
@@ -417,7 +415,7 @@ unmeasured targets; run `python src/evals/regression/update_baseline.py` with a 
 create launch → live agent progress → review checkpoint → read results mid-pause → approve / edit / reject → completed brief → Markdown export → post-launch analytics from supplied metrics; per-user isolation; failed-agent retry; cost budget.
 
 **Not verified yet:** real Claude/Tavily runs (no live eval baseline recorded), PostgreSQL, Docker Compose, AWS CDK/Lambda/ECS and Vercel deploys, HubSpot/Slack integrations, Clerk in production.
-**Not built:** GA4 connector, Qdrant/RAG in the agents, billing, onboarding.
+**Not built:** GA4 connector, vector memory/RAG, billing, onboarding.
 
 ---
 
@@ -461,7 +459,7 @@ Rough estimate: about 7-9 days with reuse versus 12-14 from scratch; the minimum
 - [ ] Live eval baseline (needs `ANTHROPIC_API_KEY`) and real-model prompt tuning
 - [ ] Billing, onboarding, production auth (Clerk) and security pass — see Production Readiness (only the parts your goal needs)
 - [ ] Hosting, secrets and monitoring for production — see Production Readiness
-- [ ] Wire Qdrant memory into the agents, or remove the unused modules
+- [ ] Vector memory (Qdrant) for reuse of past reports/personas, if it proves worth it
 - [ ] GA4 connector for analytics
 
 **Later**
@@ -478,7 +476,7 @@ Rough estimate: about 7-9 days with reuse versus 12-14 from scratch; the minimum
 This project demonstrates end-to-end production proficiency across:
 
 **AI Engineering**
-Multi-agent orchestration · Extended thinking (Opus 4.6) · MCP protocol · HITL design · Eval frameworks · RAG with Qdrant · Cognitive loop patterns (ReAct · Plan-and-Execute · Evaluator-Optimizer) · Prompt engineering with schema enforcement · Hallucination detection
+Multi-agent orchestration · Extended thinking (Opus 4.6) · MCP protocol · HITL design · Eval frameworks · Cognitive loop patterns (ReAct · Plan-and-Execute · Evaluator-Optimizer) · Prompt engineering with schema enforcement · Hallucination detection
 
 **Backend Engineering**
 FastAPI async architecture · SQLAlchemy 2.x async · Celery distributed tasks · Redis pub/sub · JWT auth middleware · Rate limiting · PII scrubbing pipeline · SSE streaming · Pydantic v2 validation

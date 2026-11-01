@@ -37,8 +37,8 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 async def init_models() -> None:
     """Create all tables (local/dev convenience; production uses Alembic)."""
-    import src.apps.api.models.agent  # noqa: F401
-    import src.apps.api.models.hitl  # noqa: F401
+    import src.apps.api.models.agent
+    import src.apps.api.models.hitl
     import src.apps.api.models.user  # noqa: F401
     from src.apps.api.models.launch import Base
 

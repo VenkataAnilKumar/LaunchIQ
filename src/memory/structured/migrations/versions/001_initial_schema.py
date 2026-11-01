@@ -4,8 +4,8 @@ Creates tables: launches, agent_runs, hitl_checkpoints, users
 """
 from __future__ import annotations
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 # Revision IDs
 revision = "001_initial_schema"
