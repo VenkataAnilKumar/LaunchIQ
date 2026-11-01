@@ -12,16 +12,33 @@ import redis.asyncio as aioredis
 
 from src.apps.api.config import get_settings
 
-_redis: aioredis.Redis | None = None
+import asyncio
+import weakref
+
+# One client per running event loop (weakly keyed, so it dies with the loop): Celery
+# tasks call asyncio.run() repeatedly, and a connection created on a closed loop
+# raises "Event loop is closed" on the next task.
+_clients: "weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, aioredis.Redis]" = (
+	weakref.WeakKeyDictionary()
+)
+_sync_client: aioredis.Redis | None = None
 
 
 def get_redis() -> aioredis.Redis:
-	"""Return a singleton Redis client (lazy-initialised)."""
-	global _redis
-	if _redis is None:
-		settings = get_settings()
-		_redis = aioredis.from_url(settings.redis_url, decode_responses=True)
-	return _redis
+	"""Return a Redis client bound to the current event loop (lazy-initialised)."""
+	global _sync_client
+	settings = get_settings()
+	try:
+		loop = asyncio.get_running_loop()
+	except RuntimeError:
+		if _sync_client is None:
+			_sync_client = aioredis.from_url(settings.redis_url, decode_responses=True)
+		return _sync_client
+	client = _clients.get(loop)
+	if client is None:
+		client = aioredis.from_url(settings.redis_url, decode_responses=True)
+		_clients[loop] = client
+	return client
 
 
 class SessionStore:

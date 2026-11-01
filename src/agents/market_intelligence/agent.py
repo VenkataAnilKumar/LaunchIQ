@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 from typing import Any, AsyncIterator
 
@@ -38,7 +37,7 @@ class MarketIntelligenceAgent(BaseAgent):
 		super().__init__(
 			AgentConfig(
 				agent_id="market_intelligence",
-				model="claude-sonnet-4-6",
+				model="sonnet",
 				max_tokens=4096,
 				tools=[TAVILY_TOOL],
 				system_prompt=_load_prompt("system.md"),
@@ -51,40 +50,19 @@ class MarketIntelligenceAgent(BaseAgent):
 	async def run(self, payload: dict[str, Any]) -> AgentResult:
 		user_msg = (
 			"Generate market intelligence JSON for this launch brief:\n"
-			f"product_name: {payload.get('product_name', '')}\n"
-			f"description: {payload.get('description', '')}\n"
-			f"target_market: {payload.get('target_market', '')}\n"
-			f"competitors: {payload.get('competitors', [])}\n"
+			f"{self._brief_block(payload)}"
 			f"research_guidance:\n{_load_prompt('research.md')}\n"
 			f"analysis_guidance:\n{_load_prompt('analyze.md')}"
 		)
 
 		messages = self._build_messages(user_msg)
-		final_text, tool_calls, thinking = await self._call_with_tools(
-			messages,
-			TavilySearchExecutor(),
+		validated, tool_calls, thinking = await self._generate_validated(
+			messages, TavilySearchExecutor()
 		)
-
-		output_dict = self._extract_json(final_text)
-		validated = self._validate_output(output_dict)
-		return AgentResult(
-			agent_id=self.config.agent_id,
-			output=validated,
-			thinking=thinking,
-			tool_calls=tool_calls,
-		)
+		return self.make_result(validated, thinking=thinking, tool_calls=tool_calls)
 
 	async def stream(self, payload: dict[str, Any]) -> AsyncIterator[str]:
 		result = await self.run(payload)
 		yield json.dumps(result.output)
 
-	def _extract_json(self, text: str) -> dict[str, Any]:
-		fenced = re.search(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL)
-		raw = fenced.group(1) if fenced else text.strip()
-		# Fallback to first JSON object if model included extra text.
-		if not raw.startswith("{"):
-			match = re.search(r"(\{.*\})", raw, re.DOTALL)
-			if match:
-				raw = match.group(1)
-		return json.loads(raw)
 

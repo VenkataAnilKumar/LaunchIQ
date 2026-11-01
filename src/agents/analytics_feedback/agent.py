@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 from typing import Any, AsyncIterator
 
 from pydantic import BaseModel
 
 from src.agents._base.base_agent import AgentConfig, AgentResult, BaseAgent
+from src.agents._base.llm import extract_json
 
 from .anomaly_detector import AnomalyDetector
 from .metrics_aggregator import MetricsAggregator
@@ -63,7 +63,7 @@ class AnalyticsFeedbackAgent(BaseAgent):
 		super().__init__(
 			AgentConfig(
 				agent_id="analytics_feedback",
-				model="claude-haiku-4-5-20251001",
+				model="haiku",
 				tools=[GA4_TOOL],
 				system_prompt=_load_prompt("system.md"),
 			)
@@ -82,7 +82,8 @@ class AnalyticsFeedbackAgent(BaseAgent):
 
 		if ga4_property_id:
 			user_msg = (
-				"Analyze launch performance with GA4 metrics and return strict JSON. "
+				"Analyze launch performance with GA4 metrics and return strict JSON.\n"
+				f"{self._brief_block(payload)}"
 				f"property_id={ga4_property_id}."
 			)
 			messages = self._build_messages(user_msg)
@@ -90,19 +91,19 @@ class AnalyticsFeedbackAgent(BaseAgent):
 
 			# If model response fails parsing, fall back to deterministic output from helpers.
 			try:
-				output_dict = self._extract_json(final_text)
+				output_dict = extract_json(final_text)
 			except Exception:
 				metrics = self._aggregator.aggregate({"metrics": {"sessions": 1200, "conversions": 48, "engagement_rate": 0.52}})
 				output_dict = self._fallback_output(metrics, content)
 
 			validated = self._validate_output(output_dict)
-			return AgentResult(agent_id=self.config.agent_id, output=validated, tool_calls=tool_calls)
+			return self.make_result(validated, tool_calls=tool_calls)
 
 		# No GA4: derive insights from available content context.
 		metrics = {"sessions": 0.0, "conversions": 0.0, "engagement_rate": 0.45, "conversion_rate": 0.03}
 		output_dict = self._fallback_output(metrics, content)
 		validated = self._validate_output(output_dict)
-		return AgentResult(agent_id=self.config.agent_id, output=validated)
+		return self.make_result(validated)
 
 	async def stream(self, payload: dict[str, Any]) -> AsyncIterator[str]:
 		result = await self.run(payload)
@@ -119,12 +120,4 @@ class AnalyticsFeedbackAgent(BaseAgent):
 			"predicted_next_action": "Optimize onboarding funnel and retest paid copy",
 		}
 
-	def _extract_json(self, text: str) -> dict[str, Any]:
-		fenced = re.search(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL)
-		raw = fenced.group(1) if fenced else text.strip()
-		if not raw.startswith("{"):
-			match = re.search(r"(\{.*\})", raw, re.DOTALL)
-			if match:
-				raw = match.group(1)
-		return json.loads(raw)
 

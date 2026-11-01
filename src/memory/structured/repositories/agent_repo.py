@@ -61,6 +61,7 @@ class AgentRepository:
         agent_id: str,
         output: dict[str, Any],
         tokens_used: int,
+        cost_usd: float = 0.0,
     ) -> None:
         await self.db.execute(
             update(AgentRun)
@@ -69,6 +70,8 @@ class AgentRepository:
                 status="completed",
                 output=output,
                 tokens_used=tokens_used,
+                cost_usd=cost_usd,
+                error=None,
                 completed_at=datetime.utcnow(),
             )
         )

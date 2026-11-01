@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Integer, JSON, String, Text
+from sqlalchemy import Column, DateTime, Float, Integer, JSON, String, Text
 
 from .launch import Base
 
@@ -17,6 +17,7 @@ class AgentRun(Base):
     status = Column(String(50), default="pending")
     output = Column(JSON, nullable=True)
     tokens_used = Column(Integer, default=0)
+    cost_usd = Column(Float, default=0.0)
     error = Column(Text, nullable=True)
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)

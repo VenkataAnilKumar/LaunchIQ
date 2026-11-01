@@ -18,11 +18,14 @@ Public surface:
 from __future__ import annotations
 
 import asyncio
+import inspect
 import json
 import logging
 import time
 from dataclasses import dataclass
 from typing import Any
+
+from .llm import AgentError, estimate_cost_usd
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +47,10 @@ class LoopConfig:
     cost_budget_usd: float | None = None
     tool_result_char_limit: int = 2000
     tool_timeout_seconds: float | None = None
+    # Seconds to wait before an API retry (doubles each attempt).
+    retry_backoff_seconds: float = 0.5
+    # Model used for the optional reflection pass (defaults to the main call's model).
+    reflection_model: str | None = None
     # Internal counters (populated during run; useful for tests / callers)
     total_tool_calls: int = 0
     tool_error_count: int = 0
@@ -125,11 +132,12 @@ async def _maybe_reflect(
             "Otherwise return the original unchanged.\n\n"
             f"DRAFT:\n{final_text}"
         )
-        resp = client.messages.create(
-            model=messages[0].get("model", "claude-sonnet-4-6") if messages else "claude-sonnet-4-6",
+        pending = client.messages.create(
+            model=config.reflection_model or "claude-sonnet-4-6",
             max_tokens=1024,
             messages=[{"role": "user", "content": reflect_prompt}],
         )
+        resp = await pending if inspect.isawaitable(pending) else pending
         improved = ""
         for block in getattr(resp, "content", []) or []:
             if getattr(block, "type", None) == "text":
@@ -170,33 +178,34 @@ async def run_tool_loop(
 
     start_ns = time.perf_counter_ns()
     iteration = 0
+    truncation_retries = 0
     stop_reason = None
 
     while iteration < max_iters:
         iteration += 1
         iter_start = time.perf_counter_ns()
 
-        # --- API call with simple retry -------------------------------------------------
+        # --- API call with retry/backoff -------------------------------------------------
         response = None
-        last_exc: Exception | None = None
         for attempt in range(cfg.max_api_retries + 1):
             try:
-                response = client.messages.create(**params)
+                pending = client.messages.create(**params)
+                response = await pending if inspect.isawaitable(pending) else pending
                 break
             except Exception as exc:
-                last_exc = exc
                 logger.warning(
                     "CognitiveLoop API call failed (attempt %d/%d): %s",
                     attempt + 1,
                     cfg.max_api_retries + 1,
                     exc,
                 )
-                if attempt == cfg.max_api_retries:
-                    logger.error("CognitiveLoop API call exhausted retries")
-                    final_text = f"[error] API failed after retries: {exc}"
-                    break
-        if response is None:
-            break
+                status = getattr(exc, "status_code", None)
+                permanent = isinstance(status, int) and 400 <= status < 500 and status not in (408, 409, 429)
+                if attempt == cfg.max_api_retries or permanent:
+                    logger.error("CognitiveLoop API call failed permanently")
+                    raise AgentError(f"LLM API call failed: {exc}") from exc
+                await asyncio.sleep(cfg.retry_backoff_seconds * (2**attempt))
+        assert response is not None
 
         # --- Token / usage accounting ---------------------------------------------------
         usage = getattr(response, "usage", None)
@@ -220,6 +229,18 @@ async def run_tool_loop(
             final_text = "".join(text_parts)
 
         stop_reason = getattr(response, "stop_reason", None)
+
+        # --- Output cut off by max_tokens: retry once with a larger budget -------------
+        if stop_reason == "max_tokens" and not tool_uses:
+            current = int(params.get("max_tokens", 0) or 0)
+            if truncation_retries < 1 and 0 < current < 32000:
+                truncation_retries += 1
+                params["max_tokens"] = min(current * 2, 32000)
+                logger.warning("Output truncated at max_tokens=%d; retrying with %d", current, params["max_tokens"])
+                cfg.total_latency_ms += int((time.perf_counter_ns() - iter_start) / 1_000_000)
+                iteration -= 1
+                continue
+            raise AgentError("Model output was truncated (max_tokens reached)")
 
         # --- Tool execution -------------------------------------------------------------
         if stop_reason == "tool_use" and tool_uses and tool_executor is not None:
@@ -290,13 +311,16 @@ async def run_tool_loop(
 
     # Optional reflection
     if cfg.enable_reflection and final_text:
+        cfg.reflection_model = cfg.reflection_model or params.get("model")
         final_text = await _maybe_reflect(client, final_text, messages, cfg)
 
     # --- Observability logging ----------------------------------------------------------
     total_ms = int((time.perf_counter_ns() - start_ns) / 1_000_000)
     avg_latency = int(cfg.total_latency_ms / max(iteration, 1))
     tool_success_rate = 1.0 - (cfg.tool_error_count / max(cfg.total_tool_calls, 1))
-    est_cost = _estimate_cost(cfg.total_input_tokens, cfg.total_output_tokens)
+    est_cost = estimate_cost_usd(
+        str(params.get("model", "")), cfg.total_input_tokens, cfg.total_output_tokens
+    )
 
     log_payload = {
         "iterations": iteration,

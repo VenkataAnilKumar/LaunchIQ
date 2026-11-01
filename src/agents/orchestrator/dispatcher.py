@@ -4,6 +4,8 @@ from __future__ import annotations
 import importlib
 from typing import Any
 
+from src.agents._base.base_agent import AgentResult
+
 
 class AgentDispatcher:
 	AGENT_MODULE_MAP: dict[str, str] = {
@@ -15,6 +17,10 @@ class AgentDispatcher:
 	}
 
 	async def dispatch(self, agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+		return (await self.dispatch_result(agent_id, payload)).output
+
+	async def dispatch_result(self, agent_id: str, payload: dict[str, Any]) -> AgentResult:
+		"""Run an agent and return the full AgentResult (output + token/cost usage)."""
 		module_path = self.AGENT_MODULE_MAP.get(agent_id)
 		if not module_path:
 			raise ValueError(f"Unknown agent_id: {agent_id}")
@@ -26,10 +32,10 @@ class AgentDispatcher:
 		result = await agent.run(payload)
 
 		# BaseAgent.run returns AgentResult; preserve compatibility with dict returns.
-		if hasattr(result, "output"):
-			return result.output
-		if isinstance(result, dict):
+		if isinstance(result, AgentResult):
 			return result
+		if isinstance(result, dict):
+			return AgentResult(agent_id=agent_id, output=result)
 		raise TypeError(f"Unexpected agent result type for {agent_id}: {type(result)!r}")
 
 	def _to_class_name(self, agent_id: str) -> str:

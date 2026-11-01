@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import update
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.apps.api.models.hitl import HITLCheckpointRecord
@@ -56,3 +56,24 @@ class HITLRepository:
             )
         )
         await self.db.commit()
+
+    async def get_latest(
+        self, launch_id: str, checkpoint: str | None = None
+    ) -> HITLCheckpointRecord | None:
+        query = select(HITLCheckpointRecord).where(HITLCheckpointRecord.launch_id == launch_id)
+        if checkpoint:
+            query = query.where(HITLCheckpointRecord.checkpoint == checkpoint)
+        result = await self.db.execute(query.order_by(HITLCheckpointRecord.created_at.desc()).limit(1))
+        return result.scalar_one_or_none()
+
+    async def get_pending(self, launch_id: str) -> HITLCheckpointRecord | None:
+        result = await self.db.execute(
+            select(HITLCheckpointRecord)
+            .where(
+                HITLCheckpointRecord.launch_id == launch_id,
+                HITLCheckpointRecord.decision.is_(None),
+            )
+            .order_by(HITLCheckpointRecord.created_at.desc())
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
