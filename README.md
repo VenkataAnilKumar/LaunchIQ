@@ -142,7 +142,7 @@ Product launches fail not because of bad products — but because teams lack the
 | **Live SSE Streaming** | Watch agents work in real time — token by token, agent by agent |
 | **Structural HITL** | Pipeline pauses at key decisions. You review. You approve. Then it continues. |
 | **MCP Tool Servers** | Tavily, HubSpot, Slack, GA4 — agents use real-world data, not hallucinations |
-| **Eval Gate in CI** | Every PR checks relevance score, hallucination rate, schema compliance vs baseline |
+| **Eval Gate in CI** | Every PR runs the real agents over a brief corpus (fake LLM) and gates on schema, grounding, injection and error regressions |
 | **3-Layer Memory** | Redis (session) + Qdrant (vectors/RAG) + PostgreSQL (structured) |
 | **Parallel Content** | Email + social + ads generated simultaneously — 3× faster than sequential |
 | **A/B by Default** | Every content piece ships in two variants, automatically |
@@ -417,7 +417,7 @@ unmeasured targets; run `python src/evals/regression/update_baseline.py` with a 
 - [x] HITL structural checkpoint system
 - [x] MCP tool servers (Tavily, HubSpot, Slack, GA4)
 - [x] Real-time SSE streaming dashboard
-- [x] Eval gate in CI/CD — schema, relevance, hallucination
+- [x] Offline eval gate in CI (live quality baseline still to be measured)
 - [x] 3-layer memory (Redis + Qdrant + PostgreSQL)
 - [x] AWS Lambda per-agent deployment
 - [x] Extended thinking on strategy agent
