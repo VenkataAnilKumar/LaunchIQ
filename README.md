@@ -20,13 +20,13 @@
 
 <br/>
 
-[**Live Demo**](https://launchiq.io) · [**Documentation**](docs/) · [**Architecture**](docs/03_AI_Architecture/04_Agentic_AI_Architecture.md) · [**Portfolio**](docs/portfolio/03_Case_Study.md)
+[**Demo**](docs/demo/README.md) · [**Documentation**](docs/) · [**Architecture**](docs/03_AI_Architecture/04_Agentic_AI_Architecture.md) · [**Portfolio**](docs/portfolio/03_Case_Study.md)
 
 ⭐ If LaunchIQ helps your team, please star this repository to support the project.
 
 <br/>
 
-<img src="docs/assets/demo.svg" alt="LaunchIQ — 6 AI agents deliver a complete launch playbook in under 3 minutes" width="100%"/>
+<img src="docs/demo/screenshots/04-review-market.webp" alt="LaunchIQ review step: formatted market research with Approve, Edit and Reject (fake-model demo data)" width="100%"/>
 
 </div>
 
@@ -70,6 +70,27 @@ Product launches fail not because of bad products — but because teams lack the
 </td>
 </tr>
 </table>
+
+---
+
+## Demo
+
+There is no hosted demo yet; the demo runs on your computer with a fake model (no API keys), so the generated text
+is placeholder content. The full 6-minute walkthrough, with exact inputs and expected results, is in
+**[`docs/demo/`](docs/demo/README.md)**.
+
+| | |
+|---|---|
+| ![Landing](docs/demo/screenshots/01-landing.webp) | ![Review](docs/demo/screenshots/05-review-strategy.webp) |
+| **Landing** with a one-click sample brief | **Human review** of the launch strategy |
+| ![Edit](docs/demo/screenshots/06-edit-form-generated-from-schema.webp) | ![Document](docs/demo/screenshots/11-results-document.webp) |
+| **Edit** form generated from the agent's schema | **Document** view, copy and Markdown download |
+
+```bash
+make local        # API with the fake model
+source scripts/local_env.sh && python3 src/data/seed.py --demo --user-id local-dev-user
+cd src/apps/web && pnpm install && NEXT_PUBLIC_DEV_BEARER_TOKEN=$(python3 ../../../scripts/dev_token.py) pnpm dev   # http://localhost:3000
+```
 
 ---
 

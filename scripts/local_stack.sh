@@ -28,7 +28,7 @@ case "${1:-status}" in
     # shellcheck disable=SC1091
     source scripts/local_env.sh
     if ! redis-cli ping >/dev/null 2>&1; then
-      redis-server --daemonize yes --port 6379 >/dev/null
+      redis-server --daemonize yes --port 6379 --dir "${TMPDIR:-/tmp}" >/dev/null
     fi
     stop_one api; stop_one worker
     start api python3 -m uvicorn src.apps.api.main:app --port 8000
