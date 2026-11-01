@@ -129,7 +129,7 @@ Product launches fail not because of bad products — but because teams lack the
                               └────────────────────┘
 ```
 
-> **HITL (Human-in-the-Loop)** is a structural pipeline gate — not a UX feature. The pipeline literally blocks on a Redis key until a human decision arrives via API. Resume from anywhere: browser, mobile, Slack, CLI.
+> **HITL (Human-in-the-Loop)** is a structural pipeline gate — not a UX feature. At a checkpoint the orchestrator stores the pending review in the database and *stops* (no worker is held while waiting). A decision arriving via `POST /api/v1/hitl/{id}/decide` is saved, schema-validated if it carries edits, and enqueues a resume that skips every agent that already finished. Resume from anywhere: browser, mobile, Slack, CLI.
 
 ---
 
@@ -137,16 +137,16 @@ Product launches fail not because of bad products — but because teams lack the
 
 | Feature | What it means |
 |---------|--------------|
-| **6-Agent Pipeline** | Orchestrator + 5 specialists, each independently deployed on AWS Lambda |
+| **Multi-Agent Pipeline** | Orchestrator + 4 pipeline agents (market, audience, strategy, content) + an on-demand post-launch analytics agent. Each has a Lambda-style handler; the deployed topology is not verified |
 | **Extended Thinking** | Opus 4.6 reasons step-by-step on strategy — not pattern matching |
 | **Live SSE Streaming** | Watch agents work in real time — token by token, agent by agent |
-| **Structural HITL** | Pipeline pauses at key decisions. You review. You approve. Then it continues. |
+| **Structural HITL** | Pipeline pauses at two review checkpoints. Approve, edit (schema-validated) or reject; stale clicks get a 409 instead of approving the next review blind |
 | **MCP Tool Servers** | Tavily, HubSpot, Slack, GA4 — agents use real-world data, not hallucinations |
 | **Eval Gate in CI** | Every PR runs the real agents over a brief corpus (fake LLM) and gates on schema, grounding, injection and error regressions |
-| **3-Layer Memory** | Redis (session) + Qdrant (vectors/RAG) + PostgreSQL (structured) |
+| **Memory** | PostgreSQL/SQLite (launches, agent runs, HITL records) + Redis (events, rate limiting). Qdrant modules exist but are not wired into the agents yet |
 | **Parallel Content** | Email + social + ads generated simultaneously — 3× faster than sequential |
 | **A/B by Default** | Every content piece ships in two variants, automatically |
-| **Per-Agent Scaling** | Slow content run? Doesn't block market intelligence. Each Lambda scales independently |
+| **Grounded & Guarded** | Trend sources must be URLs the agent actually got from search; every prompt treats briefs, web pages and human edits as data, not instructions; per-launch cost budget |
 
 ---
 
@@ -171,8 +171,8 @@ Product launches fail not because of bad products — but because teams lack the
 | API Framework | FastAPI 0.115 + Python 3.12 (async throughout) |
 | Task Queue | Celery 5.4 + Redis broker |
 | Database | PostgreSQL 16 via SQLAlchemy 2.x (async) |
-| Vector Store | Qdrant — market data, personas, brand voice |
-| Cache / Pub-Sub | Redis 7 — session state, SSE events, HITL state |
+| Vector Store | Qdrant — modules present, not yet used by the agents |
+| Cache / Pub-Sub | Redis 7 — SSE events, rate limiting, Celery broker |
 | Auth | Clerk — JWT, OAuth, magic links |
 | Migrations | Alembic |
 
@@ -216,7 +216,7 @@ Each agent is independently deployable, scalable, and observable. A slow content
 <details>
 <summary><strong>Why HITL as a pipeline gate, not a UX feature?</strong></summary>
 <br/>
-HITL is implemented at the orchestrator level — the pipeline blocks on a Redis key until a human decision arrives via <code>POST /api/v1/hitl/{id}/decide</code>. This means the guarantee is structural. The frontend being closed, refreshed, or on a different device doesn't matter. Resume from anywhere: browser, mobile, Slack bot, CLI.
+HITL is implemented at the orchestrator level — the run ends at a checkpoint and the pending review lives in the database until a human decision arrives via <code>POST /api/v1/hitl/{id}/decide</code>, which then enqueues a resume. This means the guarantee is structural and survives worker restarts. The frontend being closed, refreshed, or on a different device doesn't matter. Resume from anywhere: browser, mobile, Slack bot, CLI.
 </details>
 
 <details>
@@ -234,7 +234,7 @@ MCP (Model Context Protocol) is the 2026 standard for AI-tool integration. Each 
 <details>
 <summary><strong>Why 3-layer memory instead of one database?</strong></summary>
 <br/>
-Each layer is optimised for its job. Redis handles sub-millisecond session reads and SSE pub/sub — a relational DB would be too slow. Qdrant enables semantic similarity search across market reports and personas — Redis can't do vectors. PostgreSQL provides ACID guarantees for launch records and billing — Qdrant isn't a transactional store. One database would mean compromising on all three.
+The design splits memory by job: Redis for SSE pub/sub and rate limiting, PostgreSQL for launch records, agent runs and HITL decisions (ACID), and Qdrant for semantic search over past reports and personas. <strong>Today only Redis and PostgreSQL are wired in;</strong> the Qdrant modules (`src/memory/long_term`) are not used by the agents yet.
 </details>
 
 ---
@@ -322,7 +322,7 @@ make demo       # migrate + seed + dev (full one-command demo)
 launchiq/
 │
 ├── src/
-│   ├── agents/                     # 6 AI agents — Lambda-deployed
+│   ├── agents/                     # Orchestrator + 5 agents (Lambda-style handlers)
 │   │   ├── _base/                  # BaseAgent · CognitiveLoop · OutputValidator
 │   │   ├── orchestrator/           # Pipeline coordinator (Opus 4.6 + Thinking)
 │   │   ├── market_intelligence/    # Web research + competitor analysis
@@ -355,7 +355,7 @@ launchiq/
 │   │   ├── long_term/              # Qdrant — market data · personas · brand voice
 │   │   └── structured/             # PostgreSQL — launches · agents · users · HITL records
 │   │
-│   ├── evals/                      # Eval framework + per-agent suites
+│   ├── evals/                      # Eval corpus + pipeline evaluator + regression gate
 │   │   ├── framework/              # Evaluator · Scorer · Langfuse client · Reporter
 │   │   ├── metrics/                # relevance · hallucination · schema · edit_rate
 │   │   ├── suites/                 # Per-agent test cases + expected outputs
@@ -411,17 +411,35 @@ unmeasured targets; run `python src/evals/regression/update_baseline.py` with a 
 
 ---
 
+## Project Status
+
+**Verified end to end (fake LLM, SQLite, local Redis, Celery or inline runner; 62 unit/API tests, browser E2E in Chromium):**
+create launch → live agent progress → review checkpoint → read results mid-pause → approve / edit / reject → completed brief → Markdown export → post-launch analytics from supplied metrics; per-user isolation; failed-agent retry; cost budget.
+
+**Not verified yet:** real Claude/Tavily runs (no live eval baseline recorded), PostgreSQL, Docker Compose, AWS CDK/Lambda/ECS and Vercel deploys, HubSpot/Slack integrations, Clerk in production.
+**Not built:** GA4 connector, Qdrant/RAG in the agents, billing, onboarding.
+
+---
+
 ## Roadmap
 
-- [x] Multi-agent pipeline (Orchestrator + 5 workers)
-- [x] HITL structural checkpoint system
-- [x] MCP tool servers (Tavily, HubSpot, Slack, GA4)
-- [x] Real-time SSE streaming dashboard
-- [x] Offline eval gate in CI (live quality baseline still to be measured)
-- [x] 3-layer memory (Redis + Qdrant + PostgreSQL)
-- [x] AWS Lambda per-agent deployment
-- [x] Extended thinking on strategy agent
-- [x] A/B content variants by default
+**Done**
+- [x] Multi-agent pipeline with resumable human-review checkpoints (DB-backed, event-driven)
+- [x] Real-time SSE dashboard (authenticated stream), status banner, retry, export
+- [x] Offline eval gate in CI over a 16-brief corpus incl. prompt-injection briefs
+- [x] Source grounding, prompt-injection guards, per-launch cost budget
+- [x] Post-launch analytics from user-supplied metrics
+- [x] Keyless local stack (`make local`)
+- [x] A/B content variants by default; extended thinking on the strategy agent
+
+**Next**
+- [ ] Live eval baseline (needs `ANTHROPIC_API_KEY`) and real-model prompt tuning
+- [ ] Billing, onboarding, production auth (Clerk) and security pass
+- [ ] Hosting, secrets and monitoring for production
+- [ ] Wire Qdrant memory into the agents, or remove the unused modules
+- [ ] GA4 connector for analytics
+
+**Later**
 - [ ] Slack bot — trigger and approve launches from Slack
 - [ ] Brand voice learning — improve content from past launch performance
 - [ ] Competitor monitoring — weekly automated market intelligence updates
