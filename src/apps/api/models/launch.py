@@ -21,6 +21,7 @@ class LaunchStatus(str, Enum):
     HITL_PENDING = "hitl_pending"
     COMPLETED = "completed"
     FAILED = "failed"
+    REJECTED = "rejected"
 
 
 class Launch(Base):

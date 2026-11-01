@@ -110,5 +110,5 @@ def test_full_pipeline_e2e() -> None:
 
     brief = final_data.get("brief", {})
     assert isinstance(brief, dict)
-    for key in ("market_intelligence", "audience_insight", "launch_strategy", "content_generation"):
+    for key in ("market_data", "personas", "strategy", "content"):
         assert key in brief

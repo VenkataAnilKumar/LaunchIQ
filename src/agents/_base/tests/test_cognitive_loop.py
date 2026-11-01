@@ -137,7 +137,7 @@ async def test_api_retry_on_transient_failure():
         mock_client,
         params,
         tool_executor=None,
-        config=LoopConfig(enable_reflection=False, max_api_retries=1),
+        config=LoopConfig(enable_reflection=False, max_api_retries=1, retry_backoff_seconds=0),
     )
 
     assert text == "Recovered."

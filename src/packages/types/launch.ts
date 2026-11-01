@@ -1,6 +1,6 @@
 export interface Launch {
   launch_id: string;
-  status: 'pending' | 'running' | 'hitl_pending' | 'completed' | 'failed';
+  status: 'pending' | 'running' | 'hitl_pending' | 'completed' | 'failed' | 'rejected';
   product_name: string;
   description: string;
   target_market: string;

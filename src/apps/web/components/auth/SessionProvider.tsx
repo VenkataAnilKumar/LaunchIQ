@@ -9,7 +9,7 @@ export interface SessionUser {
 	id: string;
 	label: string;
 	email: string | null;
-	source: "clerk";
+	source: "clerk" | "dev";
 }
 
 interface SessionContextValue {
@@ -70,8 +70,28 @@ function ClerkBackedSessionProvider({ children }: { children: React.ReactNode })
 	return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
 
+// Keyless local development: a dev bearer token stands in for a Clerk session. The API only
+// accepts unsigned tokens outside production, so this has no effect on deployed environments.
+function devSessionFromToken(token: string | undefined): SessionUser | null {
+	if (!token) {
+		return null;
+	}
+	try {
+		const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+		const id = typeof payload.sub === "string" && payload.sub ? payload.sub : "local-dev-user";
+		return { id, label: `Local dev (${id})`, email: null, source: "dev" };
+	} catch {
+		return null;
+	}
+}
+
 export function SessionProvider({ children }: { children: React.ReactNode }) {
 	const hasClerkConfig = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+	const devSession = useMemo(() => devSessionFromToken(process.env.NEXT_PUBLIC_DEV_BEARER_TOKEN), []);
+	const devValue = useMemo<SessionContextValue>(
+		() => ({ session: devSession, isLoaded: true, signOut: async () => undefined }),
+		[devSession],
+	);
 
 	useEffect(() => {
 		if (!hasClerkConfig) {
@@ -80,7 +100,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 	}, [hasClerkConfig]);
 
 	if (!hasClerkConfig) {
-		return <SessionContext.Provider value={DEFAULT_CONTEXT}>{children}</SessionContext.Provider>;
+		return (
+			<SessionContext.Provider value={devSession ? devValue : DEFAULT_CONTEXT}>
+				{children}
+			</SessionContext.Provider>
+		);
 	}
 
 	return <ClerkBackedSessionProvider>{children}</ClerkBackedSessionProvider>;

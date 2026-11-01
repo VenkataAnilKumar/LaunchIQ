@@ -53,6 +53,12 @@ export default function AgentStream({ launchId, onReload }: { launchId: string; 
 
 			if (event.type === "connected") {
 				setStreaming(true);
+				onReload?.(); // catch up on anything published before we connected
+				return;
+			}
+
+			if (event.type === "launch_completed" || event.type === "launch_failed" || event.type === "launch_rejected") {
+				onReload?.();
 				return;
 			}
 

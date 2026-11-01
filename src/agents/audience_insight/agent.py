@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 from typing import Any, AsyncIterator
 
@@ -23,7 +22,7 @@ class AudienceInsightAgent(BaseAgent):
 		super().__init__(
 			AgentConfig(
 				agent_id="audience_insight",
-				model="claude-sonnet-4-6",
+				model="sonnet",
 				system_prompt=_load_prompt("system.md"),
 			)
 		)
@@ -37,37 +36,17 @@ class AudienceInsightAgent(BaseAgent):
 
 		user_msg = (
 			"Generate audience insights as strict JSON.\n"
+			f"{self._brief_block(payload)}"
 			f"market_data: {json.dumps(market_data)}\n"
 			f"persona_guide:\n{_load_prompt('persona.md')}"
 		)
 
 		messages = self._build_messages(user_msg, context={"market_data": market_data})
-		response = self.client.messages.create(**self._make_api_params(messages))
-
-		text_parts = [b.text for b in response.content if getattr(b, "type", "") == "text"]
-		final_text = "".join(text_parts)
-
-		output_dict = self._extract_json(final_text)
-		validated = self._validate_output(output_dict)
-		usage = getattr(response, "usage", None)
-		tokens = int(getattr(usage, "output_tokens", 0) or 0)
-
-		return AgentResult(
-			agent_id=self.config.agent_id,
-			output=validated,
-			tokens_used=tokens,
-		)
+		validated, _, _ = await self._generate_validated(messages)
+		return self.make_result(validated)
 
 	async def stream(self, payload: dict[str, Any]) -> AsyncIterator[str]:
 		result = await self.run(payload)
 		yield json.dumps(result.output)
 
-	def _extract_json(self, text: str) -> dict[str, Any]:
-		fenced = re.search(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL)
-		raw = fenced.group(1) if fenced else text.strip()
-		if not raw.startswith("{"):
-			match = re.search(r"(\{.*\})", raw, re.DOTALL)
-			if match:
-				raw = match.group(1)
-		return json.loads(raw)
 

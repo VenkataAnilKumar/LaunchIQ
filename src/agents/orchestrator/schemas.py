@@ -8,7 +8,8 @@ from pydantic import BaseModel
 
 class OrchestratorOutput(BaseModel):
 	launch_id: str
-	status: Literal["completed", "failed", "hitl_pending"]
+	status: Literal["completed", "failed", "hitl_pending", "rejected"]
 	agent_outputs: dict[str, Any]
 	hitl_checkpoint: str | None = None
-
+	failure_reason: str | None = None
+	cost_usd: float = 0.0

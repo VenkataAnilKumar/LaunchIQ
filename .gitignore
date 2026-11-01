@@ -55,3 +55,4 @@ logs/
 # Secrets
 *.pem
 *.key
+.local/

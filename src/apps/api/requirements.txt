@@ -12,6 +12,7 @@ python-jose[cryptography]>=3.3.0
 sqlalchemy[asyncio]>=2.0.0
 alembic>=1.14.0
 asyncpg>=0.30.0
+aiosqlite>=0.20.0  # keyless local runs (DATABASE_URL=sqlite+aiosqlite:///...)
 
 # Cache / Message broker
 redis>=5.2.0

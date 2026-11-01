@@ -63,9 +63,7 @@ class OutputValidator:
         flags: list[str] = []
         text_blob = json.dumps(validated)
         for pattern in _HALLUCINATION_SIGNALS:
-            matches = re.findall(pattern, text_blob, re.IGNORECASE)
-            if matches:
-                flags.extend(matches)
+            flags.extend(m.group(0) for m in re.finditer(pattern, text_blob, re.IGNORECASE))
 
         severity = "none"
         if flags:
@@ -82,5 +80,5 @@ class OutputValidator:
         """Run heuristics on raw text — returns list of flagged phrases."""
         flags: list[str] = []
         for pattern in _HALLUCINATION_SIGNALS:
-            flags.extend(re.findall(pattern, text, re.IGNORECASE))
+            flags.extend(m.group(0) for m in re.finditer(pattern, text, re.IGNORECASE))
         return flags

@@ -126,6 +126,16 @@ textarea {
   color: #304437;
 }
 
+.status-hitl_pending {
+  background: rgba(30, 90, 190, 0.18);
+  color: #123f87;
+}
+
+.status-rejected {
+  background: rgba(120, 120, 120, 0.22);
+  color: #3c3c3c;
+}
+
 .dialog-overlay {
   position: fixed;
   inset: 0;

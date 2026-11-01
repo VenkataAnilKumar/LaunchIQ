@@ -27,6 +27,20 @@ class TavilySearchExecutor(BaseMCPServer):
 		search_depth: str,
 	) -> dict[str, Any]:
 		settings = get_settings()
+		if settings.search_provider == "fake":
+			return {
+				"query": query,
+				"answer": "Offline canned answer (SEARCH_PROVIDER=fake).",
+				"results": [
+					{
+						"title": f"Result {i} for {query}",
+						"url": f"https://example.com/fake/{i}",
+						"content": "Canned search snippet used for offline runs.",
+						"score": round(1 - i / 10, 2),
+					}
+					for i in range(1, max_results + 1)
+				],
+			}
 		body = {
 			"api_key": settings.tavily_api_key,
 			"query": query,

@@ -1,269 +1,114 @@
+"""Pipeline evaluator: runs the real agents over the brief corpus and scores each output.
+
+With LLM_PROVIDER=fake (``--offline``) this verifies the plumbing — prompting, parsing,
+validation, repair, grounding, orchestration inputs — on every brief, including adversarial
+ones, without any API key. It does NOT measure model quality; that needs a live run.
+"""
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel
 
-from src.evals.framework.langfuse_client import LangfuseClient
-from src.evals.framework.reporter import Reporter
-from src.evals.framework.scorer import Scorer
+from src.agents.audience_insight.schemas import AudienceInsightOutput
+from src.agents.content_generation.schemas import ContentBundle
+from src.agents.launch_strategy.schemas import LaunchStrategyOutput
+from src.agents.market_intelligence.schemas import MarketIntelligenceOutput
+from src.evals.metrics.grounding import citation_coverage, leaked_forbidden_text, product_mention
+from src.evals.metrics.hallucination import HallucinationScorer
+from src.evals.metrics.schema_compliance import SchemaComplianceScorer
+
+CORPUS_PATH = Path(__file__).resolve().parents[1] / "corpus" / "briefs.json"
+
+PIPELINE = ["market_intelligence", "audience_insight", "launch_strategy", "content_generation"]
+
+SCHEMAS: dict[str, type[BaseModel]] = {
+	"market_intelligence": MarketIntelligenceOutput,
+	"audience_insight": AudienceInsightOutput,
+	"launch_strategy": LaunchStrategyOutput,
+	"content_generation": ContentBundle,
+}
+
+# Metrics where a LOWER value is better (used by the baseline gate).
+LOWER_IS_BETTER = {"hallucination_rate", "error_rate", "injection_leak_rate", "cost_usd", "tokens"}
+
+
+def load_corpus() -> list[dict[str, Any]]:
+	return json.loads(CORPUS_PATH.read_text(encoding="utf-8"))
 
 
 class Evaluator:
-	def __init__(self, *, offline: bool = False) -> None:
-		self.scorer = Scorer()
-		self.langfuse = LangfuseClient()
-		self.reporter = Reporter()
-		self.offline = offline
+	def __init__(self) -> None:
+		self._schema = SchemaComplianceScorer()
+		self._halluc = HallucinationScorer()
 
-	async def run_suite(
-		self,
-		agent_id: str,
-		test_cases: list[dict[str, Any]],
-		expected: list[dict[str, Any]],
-	) -> dict[str, Any]:
-		results: list[dict[str, Any]] = []
-		schema_class = self._schema_for_agent(agent_id)
-
-		for index, case in enumerate(test_cases):
-			expected_output = expected[index] if index < len(expected) else {}
-			inputs = case.get("input", {})
-			actual = await self._run_agent(agent_id, inputs)
-
-			scores = self.scorer.score(
-				actual,
-				expected_output,
-				context=inputs,
-				schema_class=schema_class,
-			)
-
-			case_result = {
-				"case_id": case.get("id", f"case_{index + 1}"),
-				"input": case,
-				"actual": actual,
-				"scores": scores,
-			}
-			results.append(case_result)
-			self.langfuse.log(agent_id, case, actual, scores)
-
-		summary = self.reporter.summarize(agent_id, results)
-		summary["results"] = results
-		return summary
-
-	async def _run_agent(self, agent_id: str, inputs: dict[str, Any]) -> dict[str, Any]:
-		if self.offline:
-			return self._mock_agent_output(agent_id, inputs)
-
+	async def run_corpus(
+		self, briefs: list[dict[str, Any]] | None = None, agents: list[str] | None = None
+	) -> dict[str, dict[str, Any]]:
 		from src.agents.orchestrator.dispatcher import AgentDispatcher
 
+		briefs = briefs if briefs is not None else load_corpus()
+		wanted = agents or PIPELINE
 		dispatcher = AgentDispatcher()
-		try:
-			return await dispatcher.dispatch(agent_id, inputs)
-		except Exception as exc:
-			# Keep regression command stable even if a live model call fails.
-			return {
-				"_error": str(exc),
-				"_agent_id": agent_id,
-			}
+		rows: dict[str, list[dict[str, Any]]] = {a: [] for a in wanted}
 
-	def _mock_agent_output(self, agent_id: str, inputs: dict[str, Any]) -> dict[str, Any]:
-		product_name = str(inputs.get("product_name", "Product"))
+		for brief in briefs:
+			prior: dict[str, Any] = {}
+			for agent_id in PIPELINE:
+				if agent_id not in wanted and agent_id not in {a for a in PIPELINE[: PIPELINE.index(wanted[-1]) + 1]}:
+					continue
+				payload = {k: v for k, v in brief.items() if k not in {"id", "adversarial", "forbidden_text"}}
+				payload["launch_id"] = f"eval-{brief['id']}"
+				payload["prior_outputs"] = dict(prior)
+				try:
+					result = await dispatcher.dispatch_result(agent_id, payload)
+				except Exception as exc:  # recorded as an error row; never hides failures
+					if agent_id in rows:
+						rows[agent_id].append({"brief": brief["id"], "error": f"{type(exc).__name__}: {exc}"})
+					break  # downstream agents depend on this output
+				prior[agent_id] = result.output
+				if agent_id in rows:
+					rows[agent_id].append(self._score(agent_id, brief, result.output, result))
+		return {agent_id: self._summarize(agent_id, r) for agent_id, r in rows.items()}
 
-		if agent_id == "market_intelligence":
-			return {
-				"market_size": "Estimated TAM in low single-digit billions with room for mid-market expansion",
-				"growth_rate": "Category growth is strong with double-digit YoY demand",
-				"competitors": [
-					{
-						"name": "Incumbent A",
-						"positioning": "Broad suite with enterprise focus",
-						"strengths": ["Brand trust", "Wide integrations"],
-						"weaknesses": ["Slow onboarding", "High complexity"],
-						"pricing": "Premium annual contracts",
-					}
-				],
-				"trends": [
-					{
-						"trend": "Shift toward AI-assisted execution workflows",
-						"relevance": "Directly increases willingness to trial faster automation",
-						"source": "Synthetic offline fixture",
-					}
-				],
-				"white_space": "Simple guided workflow for teams that need speed over configurability",
-				"recommended_positioning": f"{product_name} as the fastest path from strategy to launch assets",
-			}
-
-		if agent_id == "audience_insight":
-			return {
-				"primary_persona": {
-					"name": "Growth-focused Product Marketer",
-					"role": "Product Marketing Manager",
-					"age_range": "28-40",
-					"pain_points": [
-						"Too much manual research before launch",
-						"Hard to align cross-functional messaging quickly",
-					],
-					"goals": [
-						"Reduce time-to-launch",
-						"Improve campaign confidence with better insight",
-					],
-					"channels": ["LinkedIn", "Email", "Product communities"],
-					"message_hook": "Plan launches in hours, not weeks, with AI-guided execution.",
-					"willingness_to_pay": "Mid to high for measurable speed gains",
-				},
-				"secondary_personas": [
-					{
-						"name": "Founder-Operator",
-						"role": "Startup Founder",
-						"age_range": "25-45",
-						"pain_points": ["Small team bandwidth", "Unclear GTM priorities"],
-						"goals": ["Faster launch cycles", "Better market learning"],
-						"channels": ["X", "Founder newsletters"],
-						"message_hook": "Ship confident launches without building a full marketing org.",
-						"willingness_to_pay": "Value-based if outcomes are visible",
-					}
-				],
-				"icp_summary": "Lean SaaS teams shipping frequent product updates with limited GTM bandwidth.",
-				"messaging_framework": {
-					"awareness": "Missed launch opportunities due to fragmented planning",
-					"consideration": "Structured AI workflow to unify research, strategy, and content",
-					"decision": "Demonstrated reduction in planning and execution cycle time",
-				},
-				"recommended_channels": ["LinkedIn", "Lifecycle email", "Webinars"],
-			}
-
-		if agent_id == "launch_strategy":
-			return {
-				"positioning_statement": f"{product_name} helps modern teams move from insight to launch execution with less friction.",
-				"launch_date_recommendation": "Target a Tuesday product announcement with 2-week prelaunch warmup",
-				"phases": [
-					{
-						"phase": "Pre-Launch",
-						"duration": "2 weeks",
-						"goals": ["Build pipeline", "Validate messaging resonance"],
-						"tactics": ["Landing page waitlist", "Founder narrative post", "Targeted email teaser"],
-						"kpis": ["Waitlist signups", "CTR", "Reply rate"],
-					},
-					{
-						"phase": "Launch Week",
-						"duration": "1 week",
-						"goals": ["Drive awareness spike", "Convert qualified demand"],
-						"tactics": ["Launch announcement", "Demo webinar", "Partner amplification"],
-						"kpis": ["Site sessions", "Demo bookings", "Trials started"],
-					},
-					{
-						"phase": "Post-Launch",
-						"duration": "2 weeks",
-						"goals": ["Sustain demand", "Capture feedback loops"],
-						"tactics": ["Customer stories", "Objection-handling content", "Retargeting ads"],
-						"kpis": ["Activation rate", "CAC", "Pipeline influenced"],
-					},
-				],
-				"channels": ["LinkedIn", "Email", "Webinars", "Community channels"],
-				"budget_allocation": {
-					"paid": "35%",
-					"content": "25%",
-					"events": "20%",
-					"experiments": "20%",
-				},
-				"success_metrics": ["Qualified pipeline", "Activation", "Cost per activated account"],
-				"risks": ["Message dilution", "Underpowered follow-up sequences"],
-			}
-
-		if agent_id == "content_generation":
-			return {
-				"email_sequence": [
-					{
-						"format": "email",
-						"variant": "a",
-						"headline": f"Launch faster with {product_name}",
-						"body": "Turn weeks of launch planning into an actionable plan in one guided workflow.",
-						"cta": "Book a demo",
-						"target_persona": "Product marketer",
-					},
-					{
-						"format": "email",
-						"variant": "b",
-						"headline": "From research to campaign execution in one day",
-						"body": "Unify market intel, audience insight, and messaging in a single launch workspace.",
-						"cta": "Start trial",
-						"target_persona": "Founder",
-					},
-					{
-						"format": "email",
-						"variant": "a",
-						"headline": "Ship launches with confidence",
-						"body": "Use structured AI outputs and HITL checkpoints to keep quality high.",
-						"cta": "See workflow",
-						"target_persona": "Growth lead",
-					},
-				],
-				"social_posts": [
-					{
-						"format": "linkedin",
-						"variant": "a",
-						"headline": "Launch planning is broken",
-						"body": "Most teams spend weeks stitching strategy docs. We replaced that with one guided AI workflow.",
-						"cta": "Learn more",
-						"target_persona": "Product marketer",
-					},
-					{
-						"format": "twitter",
-						"variant": "b",
-						"headline": "Ship smarter launches",
-						"body": "Research, positioning, and content in one loop. Less prep, better execution.",
-						"cta": "Try it",
-						"target_persona": "Founder",
-					},
-					{
-						"format": "linkedin",
-						"variant": "a",
-						"headline": "Your AI launch team",
-						"body": "Turn product inputs into a full go-to-market playbook in minutes.",
-						"cta": "Book demo",
-						"target_persona": "Growth lead",
-					},
-				],
-				"ad_copy": [
-					{
-						"format": "ad_copy",
-						"variant": "a",
-						"headline": "Launch in days, not weeks",
-						"body": "Structured AI strategy and content for modern product teams.",
-						"cta": "Start free",
-						"target_persona": "Product marketer",
-					},
-					{
-						"format": "ad_copy",
-						"variant": "b",
-						"headline": "Better GTM execution",
-						"body": "Discover, decide, and deploy with AI-assisted launch workflows.",
-						"cta": "Request demo",
-						"target_persona": "Founder",
-					},
-				],
-				"brand_voice_notes": "Confident, practical, and outcome-oriented with clear next steps.",
-			}
-
-		return {"_error": f"Unsupported offline agent: {agent_id}", "_agent_id": agent_id}
-
-	def _schema_for_agent(self, agent_id: str) -> type[BaseModel] | None:
-		mapping: dict[str, str] = {
-			"market_intelligence": "src.agents.market_intelligence.schemas.MarketIntelligenceOutput",
-			"audience_insight": "src.agents.audience_insight.schemas.AudienceInsightOutput",
-			"launch_strategy": "src.agents.launch_strategy.schemas.LaunchStrategyOutput",
-			"content_generation": "src.agents.content_generation.schemas.ContentBundle",
+	def _score(self, agent_id: str, brief: dict[str, Any], output: dict[str, Any], result: Any) -> dict[str, Any]:
+		scores: dict[str, Any] = {
+			"brief": brief["id"],
+			"schema_compliance": self._schema.score(output, SCHEMAS[agent_id]),
+			"hallucination_rate": self._halluc.score(output, brief),
+			"product_mention": product_mention(agent_id, output, brief["product_name"]),
+			"tokens": result.tokens_used,
+			"cost_usd": result.cost_usd,
 		}
-		path = mapping.get(agent_id)
-		if not path:
-			return None
+		if agent_id == "market_intelligence":
+			scores["citation_coverage"] = citation_coverage(output)
+		if brief.get("forbidden_text"):
+			scores["injection_leak"] = leaked_forbidden_text(output, brief["forbidden_text"])
+		return scores
 
-		module_path, class_name = path.rsplit(".", 1)
-		try:
-			module = __import__(module_path, fromlist=[class_name])
-			resolved = getattr(module, class_name)
-			if isinstance(resolved, type) and issubclass(resolved, BaseModel):
-				return resolved
-		except Exception:
-			return None
-		return None
+	@staticmethod
+	def _summarize(agent_id: str, rows: list[dict[str, Any]]) -> dict[str, Any]:
+		total = len(rows)
+		errors = [r for r in rows if "error" in r]
+		ok = [r for r in rows if "error" not in r]
+
+		def mean(key: str) -> float | None:
+			vals = [float(r[key]) for r in ok if key in r]
+			return round(sum(vals) / len(vals), 4) if vals else None
+
+		summary: dict[str, Any] = {
+			"agent_id": agent_id,
+			"total_cases": total,
+			"error_rate": round(len(errors) / total, 4) if total else 1.0,
+			"errors": [{"brief": e["brief"], "error": e["error"]} for e in errors],
+		}
+		for key in ("schema_compliance", "hallucination_rate", "product_mention", "citation_coverage", "tokens", "cost_usd"):
+			value = mean(key)
+			if value is not None:
+				summary[key] = value
+		leaks = [r for r in ok if "injection_leak" in r]
+		if leaks:
+			summary["injection_leak_rate"] = round(sum(1 for r in leaks if r["injection_leak"]) / len(leaks), 4)
+		return summary

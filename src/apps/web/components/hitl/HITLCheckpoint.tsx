@@ -22,10 +22,14 @@ export default function HITLCheckpoint({ hitl, onResolved }: Props) {
 		setError(null);
 		setBusy(true);
 		try {
-			await resolveHITL(hitl.launch_id, decision, edits);
+			if (decision === "reject" && !window.confirm("Reject this launch? The pipeline will stop and cannot be resumed.")) {
+				return;
+			}
+			await resolveHITL(hitl.launch_id, decision, edits, hitl.checkpoint);
 			onResolved();
 		} catch (decisionError) {
 			setError(decisionError instanceof Error ? decisionError.message : "Decision failed");
+			onResolved(); // refresh: the checkpoint may already have been decided elsewhere
 		} finally {
 			setBusy(false);
 		}
@@ -35,7 +39,7 @@ export default function HITLCheckpoint({ hitl, onResolved }: Props) {
 		setError(null);
 		setBusy(true);
 		try {
-			await resolveHITL(hitl.launch_id, "edit", edits);
+			await resolveHITL(hitl.launch_id, "edit", edits, hitl.checkpoint);
 			onResolved();
 		} catch (decisionError) {
 			setError(decisionError instanceof Error ? decisionError.message : "Edit submission failed");
@@ -46,22 +50,13 @@ export default function HITLCheckpoint({ hitl, onResolved }: Props) {
 
 	return (
 		<>
-			<div
-				style={{
-					position: "fixed",
-					inset: 0,
-					zIndex: 60,
-					background: "rgba(20, 33, 24, 0.45)",
-					backdropFilter: "blur(2px)",
-					display: "grid",
-					placeItems: "center",
-					padding: "1rem",
-				}}
-			>
-				<section className="panel" style={{ width: "min(960px, 96vw)" }}>
+				<section className="panel" data-testid="hitl-panel">
 					<h2 style={{ marginTop: 0 }}>Human Review Required</h2>
 					<p style={{ color: "var(--muted)" }}>
 						Checkpoint: <strong>{hitl.checkpoint}</strong> | Agent: <strong>{hitl.agent_id}</strong>
+					</p>
+					<p style={{ color: "var(--muted)" }}>
+						You can read the full output on the Brief, Personas and Strategy tabs before deciding.
 					</p>
 
 					<pre
@@ -86,7 +81,6 @@ export default function HITLCheckpoint({ hitl, onResolved }: Props) {
 						onReject={() => decide("reject")}
 					/>
 				</section>
-			</div>
 
 			<HITLEditModal
 				initialValue={hitl.output_preview}

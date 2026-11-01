@@ -21,8 +21,13 @@ class Settings(BaseSettings):
     clerk_jwt_audience: str = ""
     integration_encryption_key: str = ""
 
-    # Database
+    # Database (postgresql+asyncpg://... in prod, sqlite+aiosqlite:///./launchiq.db locally)
     database_url: str = "postgresql+asyncpg://postgres:password@localhost:5432/launchiq"
+    # Create tables on API startup (dev/local only; production uses Alembic)
+    auto_create_tables: bool = False
+
+    # Background work: "celery" (worker process) or "inline" (API process; local/dev/tests)
+    task_runner: str = "celery"
 
     # Redis
     redis_url: str = "redis://localhost:6379/0"
@@ -31,11 +36,19 @@ class Settings(BaseSettings):
     qdrant_url: str = "http://localhost:6333"
     qdrant_api_key: str = ""
 
-    # Anthropic
+    # Anthropic / LLM
     anthropic_api_key: str = ""
+    # "anthropic" (real API) or "fake" (deterministic offline client for local runs/tests)
+    llm_provider: str = "anthropic"
+    anthropic_model_opus: str = "claude-opus-4-6"
+    anthropic_model_sonnet: str = "claude-sonnet-4-6"
+    anthropic_model_haiku: str = "claude-haiku-4-5-20251001"
+    # Per-launch spend cap (USD, estimated). 0 disables the cap.
+    launch_cost_budget_usd: float = 5.0
 
-    # Tavily
+    # Tavily / web search. "tavily" or "fake" (canned offline results).
     tavily_api_key: str = ""
+    search_provider: str = "tavily"
 
     # OpenAI (embeddings via text-embedding-3-small)
     openai_api_key: str = ""
@@ -47,7 +60,7 @@ class Settings(BaseSettings):
     sentry_dsn: str = ""
 
     # Rate limiting
-    rate_limit_requests: int = 60
+    rate_limit_requests: int = 300
     rate_limit_window: int = 60  # seconds
 
     @property

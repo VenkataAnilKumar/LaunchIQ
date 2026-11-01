@@ -38,6 +38,7 @@ strict = true
 testpaths = ["src"]
 python_files = ["test_*.py"]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 markers = [
 	"integration: marks integration tests that require running services",
 ]

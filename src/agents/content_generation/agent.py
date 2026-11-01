@@ -3,13 +3,13 @@ from __future__ import annotations
 
 import asyncio
 import json
-import re
 from pathlib import Path
 from typing import Any, AsyncIterator
 
 from pydantic import BaseModel
 
 from src.agents._base.base_agent import AgentConfig, AgentResult, BaseAgent
+from src.agents._base.llm import extract_json
 
 from .brand_voice import BrandVoiceExtractor
 from .schemas import ContentBundle
@@ -25,7 +25,7 @@ class ContentGenerationAgent(BaseAgent):
 		super().__init__(
 			AgentConfig(
 				agent_id="content_generation",
-				model="claude-sonnet-4-6",
+				model="sonnet",
 				system_prompt=_load_prompt("system.md"),
 			)
 		)
@@ -39,6 +39,7 @@ class ContentGenerationAgent(BaseAgent):
 		strategy = prior.get("launch_strategy", {})
 		personas = prior.get("audience_insight", {})
 		brand_voice = self._brand_voice.extract(strategy)
+		self._brief = self._brief_block(payload)
 
 		email_sequence, social_posts, ad_copy = await asyncio.gather(
 			self._generate_email_sequence(strategy, personas),
@@ -53,7 +54,7 @@ class ContentGenerationAgent(BaseAgent):
 			"brand_voice_notes": json.dumps(brand_voice),
 		}
 		validated = self._validate_output(bundle)
-		return AgentResult(agent_id=self.config.agent_id, output=validated)
+		return self.make_result(validated)
 
 	async def stream(self, payload: dict[str, Any]) -> AsyncIterator[str]:
 		result = await self.run(payload)
@@ -108,28 +109,18 @@ class ContentGenerationAgent(BaseAgent):
 	) -> list[dict[str, Any]]:
 		user_msg = (
 			f"{instruction}\n"
+			f"{getattr(self, '_brief', '')}"
 			f"strategy: {json.dumps(strategy)}\n"
 			f"personas: {json.dumps(personas)}\n"
 			f"guide:\n{_load_prompt(prompt_name)}\n"
 			"Return JSON object with key 'items' containing a list."
 		)
 		messages = self._build_messages(user_msg)
-		params = self._make_api_params(messages)
-		params["max_tokens"] = max_tokens
-		response = self.client.messages.create(**params)
-		text_parts = [b.text for b in response.content if getattr(b, "type", "") == "text"]
-		payload = self._extract_json("".join(text_parts))
-		items = payload.get("items", []) if isinstance(payload, dict) else []
+		text, _, _ = await self._call_with_tools(messages, None, max_tokens=max_tokens)
+		payload = extract_json(text)
+		items = payload.get("items", [])
 		if not isinstance(items, list):
 			raise ValueError("Content generation expected list in 'items'")
 		return items
 
-	def _extract_json(self, text: str) -> dict[str, Any]:
-		fenced = re.search(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL)
-		raw = fenced.group(1) if fenced else text.strip()
-		if not raw.startswith("{"):
-			match = re.search(r"(\{.*\})", raw, re.DOTALL)
-			if match:
-				raw = match.group(1)
-		return json.loads(raw)
 

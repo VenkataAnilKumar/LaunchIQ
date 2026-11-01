@@ -27,7 +27,7 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
 					<section className="panel">
 						<h1 style={{ margin: 0 }}>Clerk Configuration Required</h1>
 						<p style={{ margin: "0.4rem 0 0", color: "var(--muted)" }}>
-							Set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY to access protected routes.
+							Set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY to access protected routes (or NEXT_PUBLIC_DEV_BEARER_TOKEN for keyless local development).
 						</p>
 					</section>
 				</div>
@@ -52,7 +52,7 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
 					<Link href="/dashboard">Dashboard</Link>
 					<Link href="/launch/new">New Launch</Link>
 					<Link href="/settings">Settings</Link>
-					<UserButton afterSignOutUrl="/sign-in" />
+					{hasClerkConfig ? <UserButton afterSignOutUrl="/sign-in" /> : null}
 				</nav>
 			</header>
 			{children}

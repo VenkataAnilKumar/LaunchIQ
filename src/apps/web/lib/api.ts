@@ -27,10 +27,19 @@ export interface LaunchCreateResponse {
 export interface LaunchDetailResponse {
 	launch_id: string;
 	status: string;
+	input?: {
+		product_name?: string;
+		description?: string;
+		target_market?: string;
+		competitors?: string[];
+		launch_date?: string | null;
+	};
 	brief: Record<string, unknown>;
 	pipeline: AgentRun[];
 	hitl_pending: boolean;
 	hitl_checkpoint: string | null;
+	total_cost_usd?: number;
+	export_ready?: boolean;
 }
 
 export interface IntegrationMetadata {
@@ -57,7 +66,7 @@ export interface IntegrationMutationResponse {
 	metadata: IntegrationMetadata;
 }
 
-async function getAuthorizationHeader(): Promise<Record<string, string>> {
+export async function getAuthorizationHeader(): Promise<Record<string, string>> {
 	const clerkToken = accessTokenProvider ? await accessTokenProvider() : null;
 	const token = clerkToken ?? process.env.NEXT_PUBLIC_DEV_BEARER_TOKEN ?? null;
 	return token ? { Authorization: `Bearer ${token}` } : {};
@@ -98,6 +107,22 @@ export async function getLaunch(launchId: string): Promise<LaunchDetailResponse>
 	return apiFetch<LaunchDetailResponse>(`/launches/${launchId}`);
 }
 
+export interface AnalyticsResult {
+	engagement_score: number;
+	top_performing_content: string[];
+	underperforming_content: string[];
+	recommendations: Array<{ area: string; insight: string; action: string; priority: "high" | "medium" | "low" }>;
+	predicted_next_action: string;
+}
+
+/** Post-launch feedback grounded in metrics the user measured (never invented). */
+export async function analyzeLaunch(launchId: string, metrics: Record<string, unknown>): Promise<AnalyticsResult> {
+	return apiFetch<AnalyticsResult>(`/launches/${launchId}/analytics`, {
+		method: "POST",
+		body: JSON.stringify({ metrics }),
+	});
+}
+
 export async function listLaunches(): Promise<Launch[]> {
 	return apiFetch<Launch[]>("/launches");
 }
@@ -118,11 +143,28 @@ export async function resolveHITL(
 	launchId: string,
 	decision: HITLDecision,
 	edits?: Record<string, unknown>,
+	checkpoint?: string,
+	comment?: string,
 ): Promise<{ status: string; next_step: string }> {
 	return apiFetch<{ status: string; next_step: string }>(`/hitl/${launchId}/decide`, {
 		method: "POST",
-		body: JSON.stringify({ decision, edits }),
+		body: JSON.stringify({ decision, edits, checkpoint, comment }),
 	});
+}
+
+/** Download the finished launch brief as a Markdown file (needs the auth header, so no plain link). */
+export async function downloadLaunchBrief(launchId: string, productName: string): Promise<void> {
+	const authHeader = await getAuthorizationHeader();
+	const res = await fetch(`${API_PREFIX}/launches/${launchId}/export?format=md`, { headers: authHeader });
+	if (!res.ok) {
+		throw new Error(res.status === 404 ? "The launch brief is not finished yet." : await res.text());
+	}
+	const url = URL.createObjectURL(await res.blob());
+	const link = document.createElement("a");
+	link.href = url;
+	link.download = `${productName.replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "launch"}-brief.md`;
+	link.click();
+	URL.revokeObjectURL(url);
 }
 
 export async function retryAgent(launchId: string, agentId: string): Promise<{ launch_id: string; agent_id: string; status: string }> {
@@ -180,14 +222,13 @@ export function getRememberedLaunchIds(): string[] {
 
 export function toLaunchSummary(id: string, detail: LaunchDetailResponse): Launch {
 	const now = new Date().toISOString();
+	const input = detail.input ?? {};
 	return {
 		launch_id: id,
-		product_name: String(detail.brief.product_name ?? "Untitled launch"),
-		description: String(detail.brief.description ?? ""),
-		target_market: String(detail.brief.target_market ?? ""),
-		competitors: Array.isArray(detail.brief.competitors)
-			? detail.brief.competitors.filter((c): c is string => typeof c === "string")
-			: [],
+		product_name: input.product_name || "Untitled launch",
+		description: input.description ?? "",
+		target_market: input.target_market ?? "",
+		competitors: input.competitors ?? [],
 		status: detail.status as Launch["status"],
 		created_at: now,
 		updated_at: now,

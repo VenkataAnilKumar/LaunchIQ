@@ -4,14 +4,6 @@ import base64
 import json
 from collections.abc import AsyncIterator
 from pathlib import Path
-import types
-import sys
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
-
-fake_db_module = types.ModuleType("src.memory.structured.database")
-fake_db_module.AsyncSessionLocal = lambda: None
-sys.modules.setdefault("src.memory.structured.database", fake_db_module)
 
 import pytest
 from fastapi import FastAPI

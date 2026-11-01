@@ -40,7 +40,8 @@ class LaunchRepository:
         )
         return list(result.scalars().all())
 
-    async def update_status(self, launch_id: str, status: LaunchStatus) -> None:
+    async def update_status(self, launch_id: str, status: LaunchStatus | str) -> None:
+        status = status.value if isinstance(status, LaunchStatus) else status
         await self.db.execute(
             update(Launch)
             .where(Launch.launch_id == launch_id)

@@ -25,17 +25,23 @@ class AgentService:
 				for run in runs
 			]
 
-	async def retry(self, launch_id: str, agent_id: str) -> bool:
-		from src.apps.api.workers.tasks import run_single_agent_task
+	async def retry(self, launch_id: str, agent_id: str) -> str:
+		"""Reset a failed agent and resume the pipeline. Returns queued | not_found | not_failed."""
+		from src.apps.api.workers.runner import enqueue_orchestrator
+		from src.memory.structured.repositories.launch_repo import LaunchRepository
 
 		async with AsyncSessionLocal() as db:
 			repo = AgentRepository(db)
-			reset = await repo.reset_agent(launch_id, agent_id)
-			if not reset:
-				return False
+			run = next((r for r in await repo.get_by_launch(launch_id) if r.agent_id == agent_id), None)
+			if run is None:
+				return "not_found"
+			if run.status != "failed":
+				return "not_failed"
+			await repo.reset_agent(launch_id, agent_id)
+			await LaunchRepository(db).update_status(launch_id, "running")
 
-		run_single_agent_task.delay(launch_id, agent_id)
-		return True
+		enqueue_orchestrator(launch_id)
+		return "queued"
 
 
 def get_agent_service() -> AgentService:
