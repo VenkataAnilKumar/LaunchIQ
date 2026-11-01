@@ -27,7 +27,6 @@ echo "Save this: $ENCRYPTION_KEY"
 # Add these secrets:
 #   ANTHROPIC_API_KEY: (from https://console.anthropic.com)
 #   INTEGRATION_ENCRYPTION_KEY: $ENCRYPTION_KEY
-#   OPENAI_API_KEY: (from https://platform.openai.com)
 #   VERCEL_TOKEN: (from https://vercel.com/account/tokens)
 #   AWS_ACCESS_KEY_ID: (from AWS IAM)
 #   AWS_SECRET_ACCESS_KEY: (from AWS IAM)
@@ -98,7 +97,6 @@ chmod +x scripts/health-check.sh
 # Set your values first
 export ANTHROPIC_API_KEY="sk-ant-..."
 export INTEGRATION_ENCRYPTION_KEY="32-char-hex-key"
-export OPENAI_API_KEY="sk-..."
 export VERCEL_TOKEN="your-token"
 export AWS_ACCESS_KEY_ID="AKIA..."
 export AWS_SECRET_ACCESS_KEY="..."
@@ -109,7 +107,6 @@ export LANGFUSE_SECRET_KEY="sk-..."
 # Add secrets via GitHub CLI
 gh secret set ANTHROPIC_API_KEY -b "$ANTHROPIC_API_KEY"
 gh secret set INTEGRATION_ENCRYPTION_KEY -b "$INTEGRATION_ENCRYPTION_KEY"
-gh secret set OPENAI_API_KEY -b "$OPENAI_API_KEY"
 gh secret set VERCEL_TOKEN -b "$VERCEL_TOKEN"
 gh secret set AWS_ACCESS_KEY_ID -b "$AWS_ACCESS_KEY_ID"
 gh secret set AWS_SECRET_ACCESS_KEY -b "$AWS_SECRET_ACCESS_KEY"
