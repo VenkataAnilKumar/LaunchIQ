@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     sentry_dsn: str = ""
 
     # Rate limiting
-    rate_limit_requests: int = 60
+    rate_limit_requests: int = 300
     rate_limit_window: int = 60  # seconds
 
     @property

@@ -12,6 +12,7 @@ DEMO_DIR = ROOT / "src" / "data" / "demo"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.agents.orchestrator.synthesizer import synthesize
 from src.apps.api.models.launch import LaunchStatus
 from src.memory.structured.database import AsyncSessionLocal
 from src.memory.structured.repositories.agent_repo import AgentRepository
@@ -141,12 +142,13 @@ async def seed_demo(user_id: str) -> str:
     strategy_output = _demo_strategy(launch_input["product_name"])
     content_output = _demo_content(launch_input["product_name"])
 
-    brief_output: dict[str, Any] = {
+    agent_outputs: dict[str, Any] = {
         "market_intelligence": market_output,
         "audience_insight": persona_output,
         "launch_strategy": strategy_output,
         "content_generation": content_output,
     }
+    brief_output = synthesize(launch_input, agent_outputs)
 
     async with AsyncSessionLocal() as db:
         launch_repo = LaunchRepository(db)
@@ -161,7 +163,7 @@ async def seed_demo(user_id: str) -> str:
         await launch_repo.update_status(launch.launch_id, LaunchStatus.COMPLETED)
 
         for agent_id in PIPELINE_SEQUENCE:
-            output = brief_output.get(agent_id, {})
+            output = agent_outputs.get(agent_id, {})
             await agent_repo.set_completed(
                 launch_id=launch.launch_id,
                 agent_id=agent_id,

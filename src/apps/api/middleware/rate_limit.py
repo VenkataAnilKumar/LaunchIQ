@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class RateLimitMiddleware(BaseHTTPMiddleware):
 	async def dispatch(self, request: Request, call_next):  # type: ignore[override]
 		path = request.url.path
-		if path.startswith("/api/v1/health") or path.startswith("/docs"):
+		if path.startswith("/api/v1/health") or path.startswith("/docs") or path.endswith("/stream"):
 			return await call_next(request)
 
 		settings = get_settings()

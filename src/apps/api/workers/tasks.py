@@ -6,12 +6,12 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from celery import shared_task
-
 from src.agents.orchestrator.agent import OrchestratorAgent
 from src.memory.short_term.session_store import SessionStore
 from src.memory.structured.database import AsyncSessionLocal
 from src.memory.structured.repositories.launch_repo import LaunchRepository
+
+from .celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,9 @@ async def execute_orchestrator(launch_id: str) -> dict[str, Any]:
 	return {"status": str(result.output.get("status")), "launch_id": launch_id}
 
 
-@shared_task(bind=True, max_retries=1, autoretry_for=(Exception,), retry_backoff=True)
+# Bound to our configured app explicitly: @shared_task would fall back to Celery's default
+# AMQP app in any process (e.g. the API) that has not imported celery_app first.
+@celery_app.task(bind=True, max_retries=1, autoretry_for=(Exception,), retry_backoff=True)
 def run_orchestrator_task(self, launch_id: str) -> dict[str, Any]:
 	return asyncio.run(execute_orchestrator(launch_id))
 

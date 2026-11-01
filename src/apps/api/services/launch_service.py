@@ -1,6 +1,7 @@
 """Launch service business logic."""
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
@@ -13,6 +14,8 @@ from src.packages.config.models import PIPELINE_SEQUENCE
 
 if TYPE_CHECKING:
 	from src.apps.api.models.launch import Launch
+
+logger = logging.getLogger(__name__)
 
 
 def _status_value(status: Any) -> str:
@@ -116,9 +119,15 @@ class LaunchService:
 			return {"product_name": launch.product_name, **launch.brief_output}
 
 	async def run_pipeline(self, launch_id: str) -> None:
+		"""Hand the launch to the worker; a launch that cannot be queued is marked failed."""
 		from src.apps.api.workers.runner import enqueue_orchestrator
 
-		enqueue_orchestrator(launch_id)
+		try:
+			enqueue_orchestrator(launch_id)
+		except Exception:
+			logger.exception("Could not enqueue launch %s", launch_id)
+			async with AsyncSessionLocal() as db:
+				await LaunchRepository(db).update_status(launch_id, "failed")
 
 
 def get_launch_service() -> LaunchService:

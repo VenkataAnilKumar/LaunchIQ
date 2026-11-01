@@ -188,3 +188,23 @@ async def test_failed_agent_can_be_retried_and_pipeline_resumes(client, monkeypa
 	await drain_background()
 	d = await detail(client, lid)
 	assert d["status"] == "hitl_pending" and d["hitl_checkpoint"] == "strategy_review"
+
+
+@pytest.mark.asyncio
+async def test_unqueueable_launch_is_marked_failed_not_stuck_pending(client, monkeypatch) -> None:
+	import src.apps.api.workers.runner as runner
+
+	def boom(_launch_id: str) -> None:
+		raise ConnectionError("broker down")
+
+	monkeypatch.setattr(runner, "enqueue_orchestrator", boom)
+	lid = await create(client)
+	assert (await detail(client, lid))["status"] == "failed"
+
+
+def test_celery_tasks_bind_to_the_configured_app() -> None:
+	from src.apps.api.workers.celery_app import celery_app
+	from src.apps.api.workers.tasks import run_orchestrator_task
+
+	assert run_orchestrator_task.app is celery_app
+	assert "redis" in str(celery_app.conf.broker_url)
