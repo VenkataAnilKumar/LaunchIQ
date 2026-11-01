@@ -29,11 +29,11 @@ This section is important: AI tools helped me move faster, but every architectur
 | Product Vision | Defined the problem, user personas, and value proposition from scratch | — |
 | Architecture Design | Designed the full multi-agent system: 6 agents, memory layers, tool registry, HITL workflow | Claude as a sounding board for trade-off analysis |
 | Agent Engineering | Designed each agent's capability, prompt strategy, tool use, memory scope, and eval criteria | Claude API for agent execution |
-| Tech Stack Decisions | Selected and justified every technology choice (FastAPI, Next.js, Qdrant, etc.) | — |
+| Tech Stack Decisions | Selected and justified every technology choice (FastAPI, Next.js, Celery, etc.) | — |
 | Prompt Engineering | Wrote and iterated system prompts for each of the 6 agents, including output schemas | Claude for iteration, judgment mine |
 | Backend Development | Built FastAPI API, Celery task queue, agent orchestration layer, MCP tool integrations, Alembic migrations | Copilot for boilerplate, architecture and logic mine |
 | Frontend Development | Built Next.js 15 UI with SSE streaming, React 19 Server Components, Tailwind v4 | shadcn/ui components, layout and UX decisions mine |
-| Data Architecture | Designed PostgreSQL schema, Qdrant namespace strategy, Redis session design | — |
+| Data Architecture | Designed PostgreSQL schema and Redis session/event design | — |
 | Security Design | Designed RBAC, RLS policies, OWASP mitigations, AI-specific threat model | — |
 | Eval Framework | Built per-agent eval suites (relevance, hallucination, schema compliance, edit rate), CI gate | — |
 | Product Documentation | Wrote all 22+ product documents covering PRD, research, architecture, GTM, and more | Structured the content; wrote the product thinking |
@@ -52,8 +52,8 @@ Evaluated both. Chose Claude Agent SDK for tighter native integration with the L
 ### 3. HITL as a Core Architecture Pattern
 Made human-in-the-loop a first-class workflow component — not just a UX nice-to-have. Each agent outputs to a structured checkpoint that pauses the pipeline. This builds user trust and allows data collection on where AI needs improvement.
 
-### 4. Qdrant over Pinecone
-Self-hostable, open-source, and more cost-effective at early stage. Pinecone's managed simplicity isn't worth the cost premium when Qdrant Cloud provides equivalent managed experience.
+### 4. Cut the vector store until it is needed
+A vector database (Qdrant, chosen over Pinecone for self-hosting and cost) was designed but never used by the agents, so it was removed rather than left half-wired. It can return once there is data worth retrieving.
 
 ### 5. FastAPI over Node.js/Express for Backend
 AI tooling is Python-native. Running agents in the same language as the backend eliminates a cross-language interface, reduces latency, and simplifies the agent execution model.
@@ -66,7 +66,7 @@ Built an eval regression gate into GitHub Actions so every PR that touches agent
 ## What I Learned Building LaunchIQ
 
 ### Technical Learnings
-1. **Agent memory design is the hardest problem** — deciding what to put in short-term (Redis) vs. long-term (Qdrant) vs. structured (PostgreSQL) requires careful thought about retrieval patterns and latency requirements.
+1. **Agent memory design is the hardest problem** — deciding what to put in short-term (Redis) vs. structured (PostgreSQL), with a vector store as a later option requires careful thought about retrieval patterns and latency requirements.
 
 2. **Streaming agent output to UI requires architectural thought** — SSE from FastAPI through Celery to the browser needs careful backpressure handling. Solved with Redis pub/sub as the bridge.
 
@@ -99,10 +99,10 @@ Built an eval regression gate into GitHub Actions so every PR that touches agent
 
 | Skill Area | Evidence |
 |------------|---------|
-| AI Engineering | Designed and built a 6-agent multi-agent system using Claude Agent SDK, MCP, and RAG |
+| AI Engineering | Designed and built a 6-agent multi-agent system using the Anthropic SDK and MCP-style tool servers |
 | System Architecture | Full system design: frontend, backend, agents, memory, tools, observability |
 | Product Thinking | PRD, user research, competitive analysis, onboarding design, GTM strategy |
-| Full Stack Development | Next.js 15 + FastAPI + PostgreSQL + Redis + Qdrant — end to end |
+| Full Stack Development | Next.js 15 + FastAPI + PostgreSQL + Redis — end to end |
 | Technical Judgment | Every tech stack decision documented with rationale and trade-offs |
 | Security Awareness | OWASP coverage, AI-specific threat model, GDPR compliance design |
 | Eval Engineering | Per-agent quality suites with CI regression gate — not just vibes testing |

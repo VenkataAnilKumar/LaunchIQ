@@ -20,7 +20,7 @@
 
 <br/>
 
-[**Live Demo**](https://launchiq.io) · [**Documentation**](docs/) · [**Architecture**](docs/03_AI_Architecture/04_Agentic_AI_Architecture.md) · [**Portfolio**](portfolio/03_Case_Study.md)
+[**Live Demo**](https://launchiq.io) · [**Documentation**](docs/) · [**Architecture**](docs/03_AI_Architecture/04_Agentic_AI_Architecture.md) · [**Portfolio**](docs/portfolio/03_Case_Study.md)
 
 ⭐ If LaunchIQ helps your team, please star this repository to support the project.
 
@@ -490,7 +490,7 @@ AWS CDK v2 IaC · Lambda per-service architecture · ECS Fargate · Multi-stage 
 **Product Thinking**
 Full PRD · Competitive analysis · GTM strategy · User research · Business model canvas — demonstrating product judgment alongside engineering skill
 
-> Portfolio documentation: [`portfolio/`](portfolio/) | [`docs/`](docs/)
+> Portfolio documentation: [`docs/portfolio/`](docs/portfolio/) | [`docs/`](docs/)
 
 ---
 
@@ -522,7 +522,7 @@ If LaunchIQ solves a problem you care about —<br/>as a customer, investor, co-
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/venkataanilkumar)
 [![Email](https://img.shields.io/badge/Email-Get%20In%20Touch-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:vanilkumarch@gmail.com)
-[![Portfolio](https://img.shields.io/badge/Portfolio-View%20Case%20Study-6366f1?style=for-the-badge)](portfolio/03_Case_Study.md)
+[![Portfolio](https://img.shields.io/badge/Portfolio-View%20Case%20Study-6366f1?style=for-the-badge)](docs/portfolio/03_Case_Study.md)
 
 <br/>
 

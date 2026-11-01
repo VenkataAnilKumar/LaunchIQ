@@ -69,7 +69,7 @@
 
   ┌─────────────────────────────────────────┐
   │  Persistent Memory Architecture         │
-  │  Redis + Qdrant + PostgreSQL            │
+  │  Redis + PostgreSQL                     │
   │  short-term, vector, and structured     │
   └─────────────────────────────────────────┘
 
@@ -91,7 +91,7 @@
   Claude Opus 4.6 · Sonnet 4.6 · Haiku 4.5
   Claude Agent SDK · MCP Servers
   FastAPI · Next.js 15 · React 19 · Tailwind v4
-  PostgreSQL · Qdrant · Redis
+  PostgreSQL · Redis
   Langfuse · Sentry · LangSmith
   Vercel · AWS Lambda · AWS ECS
 

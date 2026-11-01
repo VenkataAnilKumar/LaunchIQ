@@ -71,7 +71,7 @@ Deciding what each agent remembers, how long it persists, and how downstream age
 
 Final memory architecture:
 - **Redis:** Session-scoped agent scratchpads and workflow state (TTL: 24h)
-- **Qdrant:** Market research embeddings and competitor vectors (persistent, refreshable)
+- **Qdrant (not built):** planned for retrieval over past reports and competitor data; removed from the implementation until there is data worth retrieving
 - **PostgreSQL:** Approved outputs — personas, strategies, content — referenced by downstream agents
 
 The key insight: agents don't pass data to each other directly. They write to shared persistent stores, and each downstream agent reads what it needs. This decouples agents and makes the system resilient to individual agent failures.

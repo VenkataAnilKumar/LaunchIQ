@@ -45,7 +45,7 @@ Human-in-the-loop checkpoints at every stage — AI does the work, human approve
 | Tool Protocol | MCP (Model Context Protocol) |
 | Backend | FastAPI, Python 3.12, Celery, Redis |
 | Frontend | Next.js 15, React 19, Tailwind CSS v4 |
-| Database | PostgreSQL, Qdrant (vectors) |
+| Database | PostgreSQL (SQLite for local runs), Redis |
 | Observability | LangSmith, Langfuse, Sentry |
 | Infrastructure | Vercel, AWS Lambda, AWS ECS |
 
@@ -75,7 +75,7 @@ Human-in-the-loop checkpoints at every stage — AI does the work, human approve
 | AI Engineering | Multi-agent system with memory, tools, HITL, and observability |
 | System Architecture | Frontend + backend + agents + data + security designed end-to-end |
 | Product Thinking | PRD, user research, competitive analysis, onboarding design |
-| Full-Stack Development | Next.js 15 + FastAPI + PostgreSQL + Qdrant + Redis |
+| Full-Stack Development | Next.js 15 + FastAPI + PostgreSQL + Redis |
 | Technical Judgment | Every stack decision documented with trade-off rationale |
 
 ---
