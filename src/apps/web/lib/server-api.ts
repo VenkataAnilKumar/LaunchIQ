@@ -13,7 +13,12 @@ type IntegrationName = "hubspot" | "slack" | "ga4";
 
 async function getServerBearerToken(): Promise<string> {
 	if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
-		throw new Error("Clerk is not configured. Set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.");
+		// Keyless local development: use the dev bearer token (the API only accepts it outside production).
+		const devToken = process.env.NEXT_PUBLIC_DEV_BEARER_TOKEN;
+		if (devToken) {
+			return devToken;
+		}
+		throw new Error("Clerk is not configured. Set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY (or NEXT_PUBLIC_DEV_BEARER_TOKEN for local dev).");
 	}
 
 	const tokenTemplate = process.env.NEXT_PUBLIC_CLERK_JWT_TEMPLATE;
