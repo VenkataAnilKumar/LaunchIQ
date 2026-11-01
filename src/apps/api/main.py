@@ -12,7 +12,7 @@ from .middleware.auth import ClerkAuthMiddleware
 from .middleware.pii_scrubber import PIIScrubberMiddleware
 from .middleware.rate_limit import RateLimitMiddleware
 from .middleware.security_headers import SecurityHeadersMiddleware
-from .routers import agents, health, hitl, integrations, launches
+from .routers import agents, health, hitl, integrations, launches, schemas
 
 settings = get_settings()
 
@@ -52,6 +52,7 @@ app.include_router(health.router, tags=["health"])
 app.include_router(launches.router, prefix="/api/v1/launches", tags=["launches"])
 app.include_router(agents.router, prefix="/api/v1/agents", tags=["agents"])
 app.include_router(hitl.router, prefix="/api/v1/hitl", tags=["hitl"])
+app.include_router(schemas.router, prefix="/api/v1/schemas", tags=["schemas"])
 app.include_router(integrations.router, prefix="/api/v1/integrations", tags=["integrations"])
 
 

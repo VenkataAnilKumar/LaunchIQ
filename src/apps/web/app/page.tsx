@@ -4,10 +4,10 @@ import { ArrowRight, Bot, Gauge, Rocket, ShieldCheck, Sparkles, Target, WandSpar
 import { redirect } from "next/navigation";
 
 const proofPoints = [
-	{ label: "Time To First Brief", value: "< 10 min", tone: "green" },
-	{ label: "Specialized Agents", value: "6", tone: "amber" },
-	{ label: "Eval-Gated CI", value: "Enabled", tone: "green" },
-	{ label: "External Tool Servers", value: "5", tone: "amber" },
+	{ label: "Specialized agents", value: "4", tone: "green" },
+	{ label: "Human review checkpoints", value: "2", tone: "amber" },
+	{ label: "Live progress", value: "Streaming", tone: "green" },
+	{ label: "Export", value: "Markdown", tone: "amber" },
 ];
 
 const features = [
@@ -37,8 +37,8 @@ const features = [
 		icon: Gauge,
 	},
 	{
-		title: "Quality Locked In CI",
-		description: "Automated eval baselines catch regressions before prompt or workflow changes hit production.",
+		title: "Tested Before It Ships",
+		description: "Every code change runs the agents over a corpus of example briefs, including prompt-injection attempts, before it can merge.",
 		icon: Sparkles,
 	},
 ];
@@ -76,18 +76,12 @@ export default async function HomePage() {
 							content with a human-controlled multi-agent pipeline.
 						</p>
 						<div className="lq-hero-cta-row">
-							<Link className="btn btn-primary" href={hasClerk ? "/sign-up" : "/dashboard"}>
-								Launch New Brief <ArrowRight size={16} style={{ marginLeft: "0.35rem", verticalAlign: "text-top" }} />
+							<Link className="btn btn-primary" href={hasClerk ? "/sign-up" : "/launch/new"}>
+								Start a launch brief <ArrowRight size={16} />
 							</Link>
-							{hasClerk ? (
-								<Link className="btn btn-secondary" href="/sign-in">
-									Sign In
-								</Link>
-							) : (
-								<Link className="btn btn-secondary" href="/dashboard">
-									Open Dashboard
-								</Link>
-							)}
+							<Link className="btn btn-secondary" href={hasClerk ? "/sign-in" : "/launch/new?sample=0"}>
+								{hasClerk ? "Sign in" : "Try a sample brief"}
+							</Link>
 						</div>
 					</div>
 
@@ -98,16 +92,17 @@ export default async function HomePage() {
 								<span />
 								<span />
 							</div>
-							<span>launchiq-runtime</span>
+							<span>example run (illustrative)</span>
 						</div>
 						<div className="lq-terminal-body">
 							<p>$ orchestration start --pipeline launch</p>
 							<p>✓ market_intelligence ............... complete</p>
 							<p>✓ audience_insight ................... complete</p>
-							<p>⚡ hitl_checkpoint.strategy ........... approved</p>
+							<p>⚡ review: brief_review .............. approved</p>
+							<p>✓ launch_strategy .................... complete</p>
+							<p>⚡ review: strategy_review ........... approved</p>
 							<p>✓ content_generation ................. complete</p>
-							<p>✓ analytics_feedback ................. complete</p>
-							<p className="lq-terminal-highlight">→ launch package ready in 03:47</p>
+							<p className="lq-terminal-highlight">→ launch brief ready for your review</p>
 						</div>
 					</div>
 				</div>
@@ -146,7 +141,7 @@ export default async function HomePage() {
 			<section className="panel lq-flow-panel lq-section-gap">
 				<div className="lq-section-head" style={{ marginBottom: "0.7rem" }}>
 					<p>Pipeline</p>
-					<h2>One input. Five strategic layers. One coherent launch package.</h2>
+					<h2>One brief. Four agents. Two checkpoints where you decide.</h2>
 				</div>
 				<div className="lq-flow-grid">
 					{flowSteps.map((step, index) => (

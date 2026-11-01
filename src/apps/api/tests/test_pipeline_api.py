@@ -227,3 +227,11 @@ async def test_post_launch_analytics_needs_completed_launch_and_real_metrics(cli
 	d = await detail(client, lid)
 	assert d["brief"]["analytics"]["predicted_next_action"]
 	assert d["pipeline"][-1]["agent_id"] == "analytics_feedback"
+
+
+@pytest.mark.asyncio
+async def test_agent_schemas_are_served_for_edit_forms(client) -> None:
+	ok = await client.get("/api/v1/schemas/launch_strategy", headers=token("alice"))
+	assert ok.status_code == 200 and "phases" in ok.json()["properties"]
+	assert (await client.get("/api/v1/schemas/nope", headers=token("alice"))).status_code == 404
+	assert (await client.get("/api/v1/schemas/launch_strategy")).status_code == 401

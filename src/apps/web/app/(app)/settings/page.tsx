@@ -221,6 +221,14 @@ export default async function SettingsPage({
 				</div>
 			</section>
 
+			<section className="panel" role="note" style={{ borderColor: "var(--warning)" }}>
+				<strong>Preview.</strong>{" "}
+				<span style={{ color: "var(--muted)" }}>
+					Saving credentials works, but these connections are not used by the launch pipeline yet, and the GA4 connector is
+					not built. Analytics uses the numbers you paste in.
+				</span>
+			</section>
+
 			{notice ? (
 				<section className="panel">
 					<p style={{ margin: 0, color: "var(--success)" }}>{notice}</p>

@@ -18,7 +18,7 @@ from src.memory.structured.repositories.launch_repo import LaunchRepository
 
 logger = logging.getLogger(__name__)
 
-_SCHEMAS: dict[str, type[BaseModel]] = {
+AGENT_OUTPUT_SCHEMAS: dict[str, type[BaseModel]] = {
 	"market_intelligence": MarketIntelligenceOutput,
 	"audience_insight": AudienceInsightOutput,
 	"launch_strategy": LaunchStrategyOutput,
@@ -119,7 +119,7 @@ class HITLService:
 		if run is None or not isinstance(run.output, dict):
 			raise InvalidEditsError(f"No output to edit for {agent_id}")
 		merged = {**run.output, **edits}
-		schema = _SCHEMAS.get(agent_id)
+		schema = AGENT_OUTPUT_SCHEMAS.get(agent_id)
 		if schema is not None:
 			try:
 				merged = schema(**merged).model_dump()

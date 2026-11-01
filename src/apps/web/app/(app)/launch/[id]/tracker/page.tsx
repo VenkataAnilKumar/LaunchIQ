@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 
 import AgentStream from "@/components/agents/AgentStream";
-import AgentPipeline from "@/components/agents/AgentPipeline";
+import PipelineStepper from "@/components/agents/PipelineStepper";
 import HITLCheckpoint from "@/components/hitl/HITLCheckpoint";
 import {
 	downloadLaunchBrief,
@@ -148,9 +148,8 @@ export default function LaunchTrackerPage() {
 
 			{loading ? <p>Loading launch data...</p> : null}
 			{error ? <p style={{ color: "var(--danger)" }}>{error}</p> : null}
-			<AgentPipeline agents={agents} />
-
 			{hitl ? <HITLCheckpoint hitl={hitl} onResolved={() => void hydrate()} /> : null}
+			<PipelineStepper agents={agents} reviewAgent={hitl?.agent_id ?? null} />
 		</main>
 	);
 }

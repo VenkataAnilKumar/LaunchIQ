@@ -1,12 +1,24 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
 
 import { resolveHITL } from "@/lib/api";
+import { AGENT_LABEL } from "@/lib/format";
 import type { HITLState } from "@/packages/types";
 
 import HITLDecisionBar from "./HITLDecisionBar";
-import HITLEditModal from "./HITLEditModal";
+import ReviewPreview from "./ReviewPreview";
+
+// The JSON-Schema form library is large; load it only when someone clicks Edit.
+const HITLEditModal = dynamic(() => import("./HITLEditModal"), { ssr: false });
+
+const CHECKPOINT_TITLE: Record<string, string> = {
+	brief_review: "Review the market research",
+	strategy_review: "Review the launch strategy",
+	persona_review: "Review the personas",
+	content_review: "Review the content",
+};
 
 interface Props {
 	hitl: HITLState;
@@ -16,16 +28,17 @@ interface Props {
 export default function HITLCheckpoint({ hitl, onResolved }: Props) {
 	const [busy, setBusy] = useState(false);
 	const [showEdit, setShowEdit] = useState(false);
+	const [comment, setComment] = useState("");
 	const [error, setError] = useState<string | null>(null);
 
 	async function decide(decision: "approve" | "reject", edits?: Record<string, unknown>): Promise<void> {
 		setError(null);
+		if (decision === "reject" && !window.confirm("Reject this launch? The pipeline will stop and cannot be resumed.")) {
+			return;
+		}
 		setBusy(true);
 		try {
-			if (decision === "reject" && !window.confirm("Reject this launch? The pipeline will stop and cannot be resumed.")) {
-				return;
-			}
-			await resolveHITL(hitl.launch_id, decision, edits, hitl.checkpoint);
+			await resolveHITL(hitl.launch_id, decision, edits, hitl.checkpoint, comment.trim() || undefined);
 			onResolved();
 		} catch (decisionError) {
 			setError(decisionError instanceof Error ? decisionError.message : "Decision failed");
@@ -36,53 +49,47 @@ export default function HITLCheckpoint({ hitl, onResolved }: Props) {
 	}
 
 	async function submitEdits(edits: Record<string, unknown>): Promise<void> {
-		setError(null);
-		setBusy(true);
-		try {
-			await resolveHITL(hitl.launch_id, "edit", edits, hitl.checkpoint);
-			onResolved();
-		} catch (decisionError) {
-			setError(decisionError instanceof Error ? decisionError.message : "Edit submission failed");
-		} finally {
-			setBusy(false);
-		}
+		await resolveHITL(hitl.launch_id, "edit", edits, hitl.checkpoint, comment.trim() || undefined);
+		onResolved();
 	}
 
 	return (
 		<>
-				<section className="panel" data-testid="hitl-panel">
-					<h2 style={{ marginTop: 0 }}>Human Review Required</h2>
-					<p style={{ color: "var(--muted)" }}>
-						Checkpoint: <strong>{hitl.checkpoint}</strong> | Agent: <strong>{hitl.agent_id}</strong>
+			<section className="panel" data-testid="hitl-panel" style={{ display: "grid", gap: "0.9rem", borderColor: "#5b8de0" }}>
+				<div>
+					<h2 style={{ margin: 0 }}>{CHECKPOINT_TITLE[hitl.checkpoint] ?? "Human review required"}</h2>
+					<p style={{ color: "var(--muted)", margin: "0.3rem 0 0" }}>
+						Checkpoint <strong>{hitl.checkpoint}</strong> · output of <strong>{AGENT_LABEL[hitl.agent_id] ?? hitl.agent_id}</strong>.
+						The pipeline is paused until you approve, edit or reject.
 					</p>
-					<p style={{ color: "var(--muted)" }}>
-						You can read the full output on the Brief, Personas and Strategy tabs before deciding.
-					</p>
+				</div>
 
-					<pre
-						style={{
-							maxHeight: "40vh",
-							overflow: "auto",
-							background: "#f2f6f1",
-							border: "1px solid var(--line)",
-							padding: "0.8rem",
-							borderRadius: "0.7rem",
-						}}
-					>
-						{JSON.stringify(hitl.output_preview, null, 2)}
-					</pre>
+				<ReviewPreview agentId={hitl.agent_id} output={hitl.output_preview} />
 
-					{error ? <p style={{ color: "var(--danger)" }}>{error}</p> : null}
-
-					<HITLDecisionBar
-						busy={busy}
-						onApprove={() => decide("approve")}
-						onEdit={() => setShowEdit(true)}
-						onReject={() => decide("reject")}
+				<div>
+					<label htmlFor="review-comment">Comment (optional)</label>
+					<textarea
+						id="review-comment"
+						onChange={(event) => setComment(event.target.value)}
+						placeholder="Why you approved, changed or rejected this"
+						rows={2}
+						style={{ marginTop: "0.35rem" }}
+						value={comment}
 					/>
-				</section>
+				</div>
+
+				{error ? <p className="field-error" role="alert">{error}</p> : null}
+
+				<HITLDecisionBar
+					busy={busy}
+					onApprove={() => decide("approve")}
+					onEdit={() => setShowEdit(true)}
+					onReject={() => decide("reject")}
+				/>
+			</section>
 
 			<HITLEditModal
+				agentId={hitl.agent_id}
 				initialValue={hitl.output_preview}
 				onClose={() => setShowEdit(false)}
 				onConfirm={submitEdits}
