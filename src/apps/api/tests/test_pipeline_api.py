@@ -192,7 +192,7 @@ async def test_failed_agent_can_be_retried_and_pipeline_resumes(client, monkeypa
 
 @pytest.mark.asyncio
 async def test_unqueueable_launch_is_marked_failed_not_stuck_pending(client, monkeypatch) -> None:
-	import src.apps.api.workers.runner as runner
+	from src.apps.api.workers import runner
 
 	def boom(_launch_id: str) -> None:
 		raise ConnectionError("broker down")
@@ -208,3 +208,22 @@ def test_celery_tasks_bind_to_the_configured_app() -> None:
 
 	assert run_orchestrator_task.app is celery_app
 	assert "redis" in str(celery_app.conf.broker_url)
+
+
+@pytest.mark.asyncio
+async def test_post_launch_analytics_needs_completed_launch_and_real_metrics(client) -> None:
+	lid = await create(client)
+	url = f"/api/v1/launches/{lid}/analytics"
+	body = {"metrics": {"sessions": 900, "conversions": 31, "engagement_rate": 0.4}}
+
+	assert (await client.post(url, json=body, headers=token("alice"))).status_code == 409  # not finished
+	await decide(client, lid, "approve")
+	await decide(client, lid, "approve")
+
+	assert (await client.post(url, json={"metrics": {}}, headers=token("alice"))).status_code == 422
+	assert (await client.post(url, json=body, headers=token("mallory"))).status_code == 404
+	ok = await client.post(url, json=body, headers=token("alice"))
+	assert ok.status_code == 200 and len(ok.json()["recommendations"]) >= 3
+	d = await detail(client, lid)
+	assert d["brief"]["analytics"]["predicted_next_action"]
+	assert d["pipeline"][-1]["agent_id"] == "analytics_feedback"

@@ -107,6 +107,22 @@ export async function getLaunch(launchId: string): Promise<LaunchDetailResponse>
 	return apiFetch<LaunchDetailResponse>(`/launches/${launchId}`);
 }
 
+export interface AnalyticsResult {
+	engagement_score: number;
+	top_performing_content: string[];
+	underperforming_content: string[];
+	recommendations: Array<{ area: string; insight: string; action: string; priority: "high" | "medium" | "low" }>;
+	predicted_next_action: string;
+}
+
+/** Post-launch feedback grounded in metrics the user measured (never invented). */
+export async function analyzeLaunch(launchId: string, metrics: Record<string, unknown>): Promise<AnalyticsResult> {
+	return apiFetch<AnalyticsResult>(`/launches/${launchId}/analytics`, {
+		method: "POST",
+		body: JSON.stringify({ metrics }),
+	});
+}
+
 export async function listLaunches(): Promise<Launch[]> {
 	return apiFetch<Launch[]>("/launches");
 }

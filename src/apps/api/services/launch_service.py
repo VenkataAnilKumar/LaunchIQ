@@ -18,6 +18,10 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+class StateError(RuntimeError):
+	"""The launch is not in a state that allows the requested action."""
+
+
 def _status_value(status: Any) -> str:
 	return status.value if hasattr(status, "value") else str(status)
 
@@ -117,6 +121,37 @@ class LaunchService:
 			if launch is None or launch.user_id != user_id or not launch.brief_output:
 				return None
 			return {"product_name": launch.product_name, **launch.brief_output}
+
+	async def analyze(self, launch_id: str, user_id: str, metrics: dict[str, Any]) -> dict[str, Any]:
+		"""Post-launch feedback from user-supplied measurements. Raises LookupError / StateError."""
+		from src.agents.orchestrator.dispatcher import AgentDispatcher
+
+		async with AsyncSessionLocal() as db:
+			launch = await LaunchRepository(db).get(launch_id)
+			if launch is None or launch.user_id != user_id:
+				raise LookupError(launch_id)
+			if _status_value(launch.status) != "completed":
+				raise StateError("Analytics is available once the launch brief is completed.")
+			repo = AgentRepository(db)
+			runs = await repo.get_by_launch(launch_id)
+			outputs = {r.agent_id: r.output for r in runs if r.status == "completed" and r.output}
+			payload = {
+				"launch_id": launch_id,
+				"product_name": launch.product_name,
+				"description": launch.description,
+				"target_market": launch.target_market,
+				"competitors": list(launch.competitors or []),
+				"launch_date": launch.launch_date,
+				"metrics": metrics,
+				"prior_outputs": outputs,
+			}
+			result = await AgentDispatcher().dispatch_result("analytics_feedback", payload)
+			if not any(r.agent_id == "analytics_feedback" for r in runs):
+				await repo.create(launch_id=launch_id, agent_id="analytics_feedback")
+			await repo.set_completed(
+				launch_id, "analytics_feedback", result.output, result.tokens_used, result.cost_usd
+			)
+			return result.output
 
 	async def run_pipeline(self, launch_id: str) -> None:
 		"""Hand the launch to the worker; a launch that cannot be queued is marked failed."""

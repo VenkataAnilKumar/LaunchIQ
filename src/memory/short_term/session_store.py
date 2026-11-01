@@ -18,7 +18,7 @@ import weakref
 # One client per running event loop (weakly keyed, so it dies with the loop): Celery
 # tasks call asyncio.run() repeatedly, and a connection created on a closed loop
 # raises "Event loop is closed" on the next task.
-_clients: "weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, aioredis.Redis]" = (
+_clients: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, aioredis.Redis] = (
 	weakref.WeakKeyDictionary()
 )
 _sync_client: aioredis.Redis | None = None

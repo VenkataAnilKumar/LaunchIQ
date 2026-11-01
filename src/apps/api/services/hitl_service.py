@@ -1,6 +1,7 @@
 """HITL service: records human decisions durably and resumes the pipeline."""
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from pydantic import BaseModel, ValidationError
@@ -14,6 +15,8 @@ from src.memory.structured.database import AsyncSessionLocal
 from src.memory.structured.repositories.agent_repo import AgentRepository
 from src.memory.structured.repositories.hitl_repo import HITLRepository
 from src.memory.structured.repositories.launch_repo import LaunchRepository
+
+logger = logging.getLogger(__name__)
 
 _SCHEMAS: dict[str, type[BaseModel]] = {
 	"market_intelligence": MarketIntelligenceOutput,
@@ -98,7 +101,8 @@ class HITLService:
 		try:
 			await session.publish(f"launch:{launch_id}:events", event)
 		except Exception:
-			pass  # streaming is best-effort; the decision is already durable
+			# Streaming is best-effort; the decision is already durable.
+			logger.warning("Could not publish hitl_resolved for %s", launch_id)
 
 		if decision == "reject":
 			return {"next_step": "halted"}

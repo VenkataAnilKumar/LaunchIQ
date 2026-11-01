@@ -83,6 +83,8 @@ def build_brief(outputs: dict[str, Any]) -> dict[str, Any]:
 		brief["strategy"] = outputs["launch_strategy"]
 	if outputs.get("content_generation"):
 		brief["content"] = outputs["content_generation"]
+	if outputs.get("analytics_feedback"):
+		brief["analytics"] = outputs["analytics_feedback"]
 	return brief
 
 

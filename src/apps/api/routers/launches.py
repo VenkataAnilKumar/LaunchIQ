@@ -14,7 +14,9 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import PlainTextResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
-from ..services.launch_service import LaunchService, get_launch_service
+from src.agents._base.llm import AgentError
+
+from ..services.launch_service import LaunchService, StateError, get_launch_service
 from ..services.stream_service import StreamService, get_stream_service
 
 router = APIRouter()
@@ -104,6 +106,29 @@ async def get_launch(
     if not launch:
         raise HTTPException(status_code=404, detail="Launch not found")
     return LaunchDetailResponse(**launch)
+
+
+class AnalyticsRequest(BaseModel):
+    # Measured results only (sessions, conversions, engagement_rate, per-content CTR, ...).
+    metrics: dict = Field(min_length=1)
+
+
+@router.post("/{launch_id}/analytics")
+async def analyze_launch(
+    launch_id: str,
+    body: AnalyticsRequest,
+    request: Request,
+    service: Annotated[LaunchService, Depends(get_launch_service)],
+) -> dict:
+    """Post-launch feedback: recommendations grounded in the metrics you supply."""
+    try:
+        return await service.analyze(launch_id, current_user(request), body.metrics)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail="Launch not found") from exc
+    except StateError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except AgentError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.get("/{launch_id}/export")

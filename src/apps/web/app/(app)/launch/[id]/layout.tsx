@@ -16,6 +16,7 @@ export default async function LaunchLayout({
 				<Link href={`${base}/personas` as Route}>Personas</Link>
 				<Link href={`${base}/strategy` as Route}>Strategy</Link>
 				<Link href={`${base}/content` as Route}>Content</Link>
+				<Link href={`${base}/analytics` as Route}>Analytics</Link>
 			</nav>
 			{children}
 		</div>

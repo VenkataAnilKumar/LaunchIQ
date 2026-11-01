@@ -274,6 +274,22 @@ make dev
 
 Open **http://localhost:3000** — the demo brief is pre-loaded.
 
+### Try it with no API keys, Docker or Postgres
+
+The whole product runs locally against a deterministic **fake LLM**, fake web search, SQLite and a local Redis
+(`redis-server` must be installed). Output is canned, so this verifies the product flow, not model quality.
+
+```bash
+pip install -r src/apps/api/requirements.txt
+make local                       # API on :8000 (source scripts/local_env.sh for the same env)
+cd src/apps/web && pnpm install
+NEXT_PUBLIC_DEV_BEARER_TOKEN=$(python3 ../../../scripts/dev_token.py) pnpm dev   # http://localhost:3000
+```
+
+`make local-celery` runs the same stack with a real Celery worker; `make local-down` stops it.
+Set `LLM_PROVIDER=anthropic` and `ANTHROPIC_API_KEY` (and `SEARCH_PROVIDER=tavily`, `TAVILY_API_KEY`)
+for real runs. Browser E2E scripts live in `scripts/e2e/`.
+
 ### Minimal `.env` to get started
 
 ```bash
@@ -290,7 +306,9 @@ See [`.env.example`](.env.example) for the complete reference with all 20+ varia
 ```bash
 make dev        # Start API + Celery worker + Next.js (all in one)
 make test       # pytest src/ with coverage
-make eval       # Run agent eval suite vs baseline
+make local      # keyless local stack (fake LLM + SQLite + local Redis)
+make eval       # offline eval gate over the brief corpus (no keys)
+make eval-live  # same corpus against the real API (needs ANTHROPIC_API_KEY)
 make migrate    # Run Alembic migrations
 make seed       # Load demo launch data
 make demo       # migrate + seed + dev (full one-command demo)
@@ -380,16 +398,16 @@ launchiq/
 
 ---
 
-## Eval Results (Baseline)
+## Evals
 
-| Agent | Relevance | Hallucination Rate | Schema Compliance |
-|-------|-----------|-------------------|-------------------|
-| Market Intelligence | 0.82 | 0.03 | 1.00 |
-| Audience Insight | 0.80 | 0.02 | 1.00 |
-| Launch Strategy | 0.85 | 0.04 | 1.00 |
-| Content Generation | 0.78 | 0.05 | 1.00 |
+`make eval` runs the **real agents** over a 16-brief corpus (`src/evals/corpus/briefs.json`: diverse products plus
+prompt-injection briefs) against the fake LLM and gates on schema compliance, hallucination heuristics, error rate,
+source grounding (citations must come from actual search results), product mention and injection leakage. It runs
+in CI on every PR with no secrets. It verifies plumbing and safety behaviour, **not model quality**.
 
-Every PR must meet or exceed these scores to merge. Run locally with `make eval`.
+`make eval-live` runs the same corpus against the real API and also reports tokens and cost per agent.
+No live run has been recorded yet, so the `live` thresholds in `src/evals/regression/baseline.json` are
+unmeasured targets; run `python src/evals/regression/update_baseline.py` with a key, review, and commit to replace them.
 
 ---
 
