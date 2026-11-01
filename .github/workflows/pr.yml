@@ -16,7 +16,8 @@ jobs:
         with: { version: 9 }
       - run: pip install ruff mypy
       - run: ruff check src/
-      - run: pnpm lint
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @launchiq/web lint
 
   typecheck:
     name: Type Check
@@ -25,8 +26,8 @@ jobs:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v3
         with: { version: 9 }
-      - run: pnpm install
-      - run: pnpm typecheck
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @launchiq/web typecheck
 
   test:
     name: Unit Tests
