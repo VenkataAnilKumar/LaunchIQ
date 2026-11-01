@@ -421,6 +421,31 @@ create launch → live agent progress → review checkpoint → read results mid
 
 ---
 
+## Production Readiness (planned, not built)
+
+Not everything below is needed for every use. What is required depends on the goal:
+
+| Goal | Auth + security pass | Hosting | Billing + onboarding |
+|------|----------------------|---------|----------------------|
+| Private / portfolio demo (run locally) | not needed | not needed | not needed |
+| Public demo anyone can try | **required** (real Clerk login, API in production mode) | **required** (one simple host) | skip |
+| Charging customers | required | required | required |
+
+Notes:
+- The local dev login accepts unsigned tokens, so it must never be used on a public server.
+- Every launch costs real model spend. A public demo also needs a per-user launch cap (the per-launch cost budget already exists).
+- Error tracking (Sentry is wired in) is enough monitoring at first.
+
+**Reuse instead of building from scratch** (all MIT; patterns to port, not templates to adopt, since none match FastAPI + Next.js + Clerk):
+- Stripe Checkout, customer portal and subscription webhooks: [`nextjs/saas-starter`](https://github.com/nextjs/saas-starter) (about 330 lines of TypeScript to port to FastAPI; the `users` table already has a `plan` column).
+- Docker Compose, Traefik with automatic HTTPS and deploy-on-merge CI: [`fastapi/full-stack-fastapi-template`](https://github.com/fastapi/full-stack-fastapi-template) (add Redis and the Celery worker, swap the Vite frontend for Next.js).
+- Clerk token verification: replace the hand-written JWKS fetch in `src/apps/api/middleware/auth.py` with Clerk's official verification library.
+
+Rough estimate: about 7-9 days with reuse versus 12-14 from scratch; the minimum for a public demo is about 3-4 days
+(live eval baseline, Clerk login, per-user cap, one deploy).
+
+---
+
 ## Roadmap
 
 **Done**
@@ -434,8 +459,8 @@ create launch → live agent progress → review checkpoint → read results mid
 
 **Next**
 - [ ] Live eval baseline (needs `ANTHROPIC_API_KEY`) and real-model prompt tuning
-- [ ] Billing, onboarding, production auth (Clerk) and security pass
-- [ ] Hosting, secrets and monitoring for production
+- [ ] Billing, onboarding, production auth (Clerk) and security pass — see Production Readiness (only the parts your goal needs)
+- [ ] Hosting, secrets and monitoring for production — see Production Readiness
 - [ ] Wire Qdrant memory into the agents, or remove the unused modules
 - [ ] GA4 connector for analytics
 
