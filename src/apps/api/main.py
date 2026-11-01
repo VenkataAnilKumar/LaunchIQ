@@ -58,6 +58,11 @@ app.include_router(integrations.router, prefix="/api/v1/integrations", tags=["in
 @app.on_event("startup")
 async def startup() -> None:
     logger.info("LaunchIQ API starting — env=%s", settings.environment)
+    if settings.auto_create_tables:
+        from src.memory.structured.database import init_models
+
+        await init_models()
+        logger.info("Database tables ensured (AUTO_CREATE_TABLES=true)")
 
 
 @app.on_event("shutdown")

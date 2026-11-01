@@ -77,3 +77,22 @@ class HITLRepository:
             .limit(1)
         )
         return result.scalar_one_or_none()
+
+    async def resolve_record(
+        self,
+        record_id: str,
+        decision: str,
+        edits: dict[str, Any] | None,
+        comment: str | None,
+    ) -> bool:
+        """Resolve one record if still unresolved. Returns False if already resolved."""
+        result = await self.db.execute(
+            update(HITLCheckpointRecord)
+            .where(
+                HITLCheckpointRecord.id == record_id,
+                HITLCheckpointRecord.decision.is_(None),
+            )
+            .values(decision=decision, edits=edits, comment=comment, resolved_at=datetime.utcnow())
+        )
+        await self.db.commit()
+        return result.rowcount > 0

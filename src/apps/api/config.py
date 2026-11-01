@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     # Create tables on API startup (dev/local only; production uses Alembic)
     auto_create_tables: bool = False
 
+    # Background work: "celery" (worker process) or "inline" (API process; local/dev/tests)
+    task_runner: str = "celery"
+
     # Redis
     redis_url: str = "redis://localhost:6379/0"
 

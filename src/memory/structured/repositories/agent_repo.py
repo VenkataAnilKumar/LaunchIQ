@@ -91,3 +91,11 @@ class AgentRepository:
         )
         await self.db.commit()
         return result.rowcount > 0
+
+    async def update_output(self, launch_id: str, agent_id: str, output: dict[str, Any]) -> None:
+        await self.db.execute(
+            update(AgentRun)
+            .where(AgentRun.launch_id == launch_id, AgentRun.agent_id == agent_id)
+            .values(output=output)
+        )
+        await self.db.commit()

@@ -14,11 +14,13 @@ from src.apps.api.config import get_settings
 
 _settings = get_settings()
 
-engine = create_async_engine(
-    _settings.database_url,
-    poolclass=NullPool,
-    echo=_settings.debug,
-)
+# NullPool keeps connections out of reach of other event loops (Celery/Lambda).
+# SQLite (local runs) is created without it so the aiosqlite default pooling applies.
+_engine_kwargs: dict = {"echo": _settings.debug}
+if not _settings.database_url.startswith("sqlite"):
+    _engine_kwargs["poolclass"] = NullPool
+
+engine = create_async_engine(_settings.database_url, **_engine_kwargs)
 
 AsyncSessionLocal = async_sessionmaker(
     engine,
@@ -31,3 +33,14 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """FastAPI dependency: yields an AsyncSession and closes it on exit."""
     async with AsyncSessionLocal() as session:
         yield session
+
+
+async def init_models() -> None:
+    """Create all tables (local/dev convenience; production uses Alembic)."""
+    import src.apps.api.models.agent  # noqa: F401
+    import src.apps.api.models.hitl  # noqa: F401
+    import src.apps.api.models.user  # noqa: F401
+    from src.apps.api.models.launch import Base
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

@@ -68,6 +68,24 @@ def to_markdown(brief: dict[str, Any], outputs: dict[str, Any]) -> str:
 	return "\n".join(lines).rstrip() + "\n"
 
 
+def build_brief(outputs: dict[str, Any]) -> dict[str, Any]:
+	"""The four sections the UI renders, assembled from whatever agents have finished."""
+	audience = outputs.get("audience_insight") or {}
+	personas: list[Any] = []
+	if audience.get("primary_persona"):
+		personas = [audience["primary_persona"], *audience.get("secondary_personas", [])]
+	brief: dict[str, Any] = {}
+	if outputs.get("market_intelligence"):
+		brief["market_data"] = outputs["market_intelligence"]
+	if personas:
+		brief["personas"] = personas
+	if outputs.get("launch_strategy"):
+		brief["strategy"] = outputs["launch_strategy"]
+	if outputs.get("content_generation"):
+		brief["content"] = outputs["content_generation"]
+	return brief
+
+
 def synthesize(brief: dict[str, Any], outputs: dict[str, Any], usage: dict[str, Any] | None = None) -> dict[str, Any]:
 	"""Merge per-agent outputs into the single launch-brief document."""
 	strategy = outputs.get("launch_strategy", {}) or {}
@@ -80,10 +98,7 @@ def synthesize(brief: dict[str, Any], outputs: dict[str, Any], usage: dict[str, 
 			"icp": audience.get("icp_summary"),
 			"launch_date_recommendation": strategy.get("launch_date_recommendation"),
 		},
-		"market": outputs.get("market_intelligence", {}),
-		"audience": audience,
-		"strategy": strategy,
-		"content": outputs.get("content_generation", {}),
+		**build_brief(outputs),
 		"usage": usage or {},
 		"markdown": to_markdown(brief, outputs),
 	}
