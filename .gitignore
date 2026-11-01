@@ -23,7 +23,6 @@ htmlcov/
 node_modules/
 .next/
 .turbo/
-dist/
 *.tsbuildinfo
 
 # Evals (reports generated at runtime)
@@ -56,3 +55,7 @@ logs/
 *.pem
 *.key
 .local/
+
+# Local runtime artifacts
+dump.rdb
+*.rdb

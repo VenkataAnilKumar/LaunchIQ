@@ -89,7 +89,7 @@ No learning loop                   Real-time optimization
 │ Celery (task queue)       │ React 19            │
 │ PostgreSQL + Alembic      │ Tailwind CSS v4     │
 │ Redis (session state)     │ Clerk (auth)        │
-│ Qdrant (vector store)     │ Zustand v5          │
+│                           │ Zustand v5          │
 └─────────────────────────────────────────────────┘
                         │
 ┌─────────────────────────────────────────────────┐
@@ -137,9 +137,8 @@ No learning loop                   Real-time optimization
 | **6 Agents** | Specialization. Market research ≠ persona building ≠ copywriting. Each agent optimized for its task. |
 | **Claude Agent SDK** | Native integration, A2A protocol, less abstraction than LangGraph. Right complexity for MVP. |
 | **FastAPI + Python** | AI tooling is Python-native. Same language = less latency, cleaner orchestration. |
-| **Qdrant** | Open-source, self-hostable, better cost than Pinecone, managed option available. |
 | **HITL-first design** | Not a UX afterthought. Core architecture: pause → human approval → resume. Builds trust + collects improvement data. |
-| **Redis + PostgreSQL + Qdrant** | Separates concerns: session state (fast), structured data (queryable), vectors (semantic). |
+| **Redis + PostgreSQL** | Separates concerns: events and rate limiting (fast) and structured data (durable). |
 | **Eval gate in CI** | Every PR touching agent prompts must pass quality baseline. Agent quality is invisible without structured measurement. |
 
 ---
@@ -172,7 +171,7 @@ No learning loop                   Real-time optimization
 
 ### You Did (Architecture & Judgment)
 - Designed the 6-agent system from scratch
-- Chose each technology (FastAPI > Node, Qdrant > Pinecone)
+- Chose each technology (FastAPI > Node)
 - Engineered HITL as a core architectural pattern
 - Built the entire frontend (13 routes, zero TypeScript errors)
 - Designed security (RBAC, encryption, OWASP)

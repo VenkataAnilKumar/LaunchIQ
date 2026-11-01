@@ -1,3 +1,5 @@
+> **Status note:** this is a design document. Its vector-memory (Qdrant/RAG) components are not part of the current implementation; they were removed until there is data worth retrieving. See the repository README for what is implemented.
+
 # LaunchIQ
 
 **AI-Powered Product Launch Intelligence Platform**
@@ -169,7 +171,7 @@ Contributions are welcome. Please open an issue first to discuss what you'd like
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT License — see [LICENSE](../../LICENSE) for details.
 
 ---
 

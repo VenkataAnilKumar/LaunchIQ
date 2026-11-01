@@ -48,7 +48,7 @@ User Input (Product Description)
 
 **Memory architecture:**
 - Short-term: Redis (session state, agent scratchpads)
-- Long-term: Qdrant (market embeddings, competitor vectors)
+- Long-term vector memory: not implemented (a possible later addition)
 - Structured: PostgreSQL (launches, strategies, content — managed via Alembic)
 
 ---
@@ -72,7 +72,7 @@ Frontend     │ Next.js 15 · React 19 · Tailwind CSS v4 · shadcn/ui · Clerk
 Backend      │ FastAPI (Python 3.12) · Celery · Redis
 AI / Agents  │ Claude Opus 4.6 · Sonnet 4.6 · Haiku 4.5 · Claude Agent SDK
 Tool Layer   │ MCP Servers (Tavily, HubSpot, Slack, GA4)
-Data         │ PostgreSQL · Qdrant (vectors) · Redis (cache)
+Data         │ PostgreSQL · Redis (cache)
 Observability│ LangSmith · Langfuse · Sentry
 Infra        │ Vercel (frontend) · AWS Lambda (agent workers) · AWS ECS (API) · GitHub Actions (CI/CD)
 ```
@@ -112,7 +112,7 @@ pnpm install
 cp .env.example .env.local    # fill in your keys
 
 # 5. Local services
-docker-compose up -d          # PostgreSQL + Redis + Qdrant
+docker-compose up -d          # PostgreSQL + Redis
 
 # 6. Run
 uvicorn main:app --reload     # backend on :8000
@@ -131,7 +131,6 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
 
 # Agent tools
 TAVILY_API_KEY=
-OPENAI_API_KEY=          # embeddings (text-embedding-3-small)
 
 # Observability
 LANGFUSE_PUBLIC_KEY=
@@ -170,7 +169,6 @@ launchiq/
 │   │       └── components/      # UI components
 │   ├── memory/
 │   │   ├── short_term/          # Redis session store, HITL state
-│   │   ├── long_term/           # Qdrant: market_store, persona_store, brand_voice_store
 │   │   └── structured/          # PostgreSQL + Alembic migrations
 │   ├── tools/                   # MCP tool servers (Tavily, HubSpot, Slack, GA4)
 │   └── evals/
@@ -197,7 +195,7 @@ launchiq/
 - [x] FastAPI backend with all routers and middleware
 - [x] PostgreSQL schema + Alembic migrations
 - [x] Redis short-term memory + HITL state
-- [x] Qdrant long-term vector stores
+- [ ] Vector memory (Qdrant): removed until there is data worth retrieving
 - [x] MCP tool integrations (Tavily, HubSpot, Slack, GA4)
 - [x] Next.js 15 frontend with SSE streaming
 - [x] Eval framework + per-agent quality suites
@@ -235,7 +233,7 @@ Full product documentation in `/docs/`:
 
 ## License
 
-MIT — see [LICENSE](LICENSE)
+MIT — see [LICENSE](../../LICENSE)
 
 ---
 

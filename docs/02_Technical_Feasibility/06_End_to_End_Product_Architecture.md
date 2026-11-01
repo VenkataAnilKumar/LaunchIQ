@@ -1,3 +1,5 @@
+> **Status note:** this is a design document. Its vector-memory (Qdrant/RAG) components are not part of the current implementation; they were removed until there is data worth retrieving. See the repository README for what is implemented.
+
 # End-to-End Product Architecture
 ## LaunchIQ — AI-Powered Product Launch Intelligence Platform
 ### 2026 Native Architecture
