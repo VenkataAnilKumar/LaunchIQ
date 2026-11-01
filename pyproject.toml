@@ -16,7 +16,6 @@ sqlalchemy = {extras = ["asyncio"], version = "^2.0.0"}
 alembic = "^1.14.0"
 pydantic = "^2.10.0"
 pydantic-settings = "^2.7.0"
-qdrant-client = "^1.13.0"
 supabase = "^2.10.0"
 langsmith = "^0.3.0"
 langfuse = "^2.58.0"
