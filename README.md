@@ -179,14 +179,15 @@ Product launches fail not because of bad products — but because teams lack the
 
 | Component | Technology |
 |-----------|-----------|
-| Framework | Next.js 15 — App Router + Partial Prerendering |
-| UI Runtime | React 19 — Server Components, Compiler, `use()` hook |
-| Styling | Tailwind CSS v4 + shadcn/ui + Radix UI primitives |
+| Framework | Next.js 15 — App Router |
+| UI Runtime | React 19 |
+| Styling | Custom CSS design system (Tailwind v4's reset is loaded; components are hand-built) |
 | Server State | TanStack Query v5 |
-| Client State | Zustand v5 + Immer |
-| Real-time | Server-Sent Events (native `EventSource`) |
-| Forms | React Hook Form v8 + Zod |
-| Type Safety | openapi-typescript — types auto-generated from FastAPI schema |
+| Client State | Zustand v5 |
+| Real-time | Server-Sent Events read with `fetch` (so the auth header can be sent) |
+| Forms | Plain controlled forms; review edit forms are generated from each agent's JSON Schema with `@rjsf/core` |
+| Documents | `react-markdown` + `remark-gfm` for the launch document |
+| Types | Hand-written in `src/packages/types` |
 
 ### Infrastructure & Observability
 
@@ -412,7 +413,7 @@ unmeasured targets; run `python src/evals/regression/update_baseline.py` with a 
 ## Project Status
 
 **Verified end to end (fake LLM, SQLite, local Redis, Celery or inline runner; 62 unit/API tests, browser E2E in Chromium):**
-create launch → live agent progress → review checkpoint → read results mid-pause → approve / edit / reject → completed brief → Markdown export → post-launch analytics from supplied metrics; per-user isolation; failed-agent retry; cost budget.
+landing page → sample brief → create launch → live agent progress → formatted review checkpoint → read results mid-pause → approve / edit (form generated from the agent's schema) / reject → completed brief → document view and Markdown export → post-launch analytics from supplied metrics; dashboard search and filters; mobile layout; per-user isolation; failed-agent retry; cost budget.
 
 **Not verified yet:** real Claude/Tavily runs (no live eval baseline recorded), PostgreSQL, Docker Compose, AWS CDK/Lambda/ECS and Vercel deploys, HubSpot/Slack integrations, Clerk in production.
 **Not built:** GA4 connector, vector memory/RAG, billing, onboarding.

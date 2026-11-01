@@ -1,7 +1,6 @@
 import Link from "next/link";
-import type { Route } from "next";
 
-import EmptyState from "@/components/ui/EmptyState";
+import LaunchList from "@/components/launch/LaunchList";
 import { listLaunchesServer } from "@/lib/server-api";
 
 export default async function DashboardPage() {
@@ -16,45 +15,23 @@ export default async function DashboardPage() {
 
 	return (
 		<main style={{ display: "grid", gap: "1rem" }}>
-			<section className="panel" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+			<section className="panel" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
 				<div>
-					<h1 style={{ margin: 0 }}>Launch Dashboard</h1>
-					<p style={{ margin: "0.35rem 0 0", color: "var(--muted)" }}>
-						Recent launches and pipeline status.
-					</p>
+					<h1 style={{ margin: 0 }}>Launches</h1>
+					<p style={{ margin: "0.35rem 0 0", color: "var(--muted)" }}>Your launch briefs and where each one stands.</p>
 				</div>
 				<Link className="btn btn-primary" href="/launch/new">
 					New launch
 				</Link>
 			</section>
 
-			<section className="panel">
-				{error ? <p style={{ color: "var(--danger)" }}>{error}</p> : null}
-
-				{!error && rows.length === 0 ? (
-					<EmptyState
-						description="Create your first launch brief to start the agent pipeline."
-						title="No Launches Yet"
-						action={{ label: "Create launch", href: "/launch/new" }}
-					/>
-				) : null}
-
-				{rows.length > 0 ? (
-					<div style={{ display: "grid", gap: "0.6rem" }}>
-						{rows.map((row) => (
-							<Link className="panel" href={`/launch/${row.launch_id}/tracker` as Route} key={row.launch_id}>
-								<div style={{ display: "flex", justifyContent: "space-between", gap: "0.8rem" }}>
-									<div>
-										<strong>{row.product_name}</strong>
-										<p style={{ margin: "0.3rem 0 0", color: "var(--muted)" }}>{row.target_market}</p>
-									</div>
-									<span className={`status-pill status-${row.status}`}>{row.status}</span>
-								</div>
-							</Link>
-						))}
-					</div>
-				) : null}
-			</section>
+			{error ? (
+				<section className="panel" role="alert" style={{ color: "var(--danger)" }}>
+					Could not load your launches: {error}
+				</section>
+			) : (
+				<LaunchList rows={rows} />
+			)}
 		</main>
 	);
 }

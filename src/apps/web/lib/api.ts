@@ -123,6 +123,16 @@ export async function analyzeLaunch(launchId: string, metrics: Record<string, un
 	});
 }
 
+/** The finished, synthesized launch brief (includes the Markdown document). */
+export async function getLaunchDocument(launchId: string): Promise<{ product_name: string; markdown: string }> {
+	return apiFetch<{ product_name: string; markdown: string }>(`/launches/${launchId}/export?format=json`);
+}
+
+/** JSON Schema of an agent's output; the review edit form is generated from it. */
+export async function getAgentSchema(agentId: string): Promise<Record<string, unknown>> {
+	return apiFetch<Record<string, unknown>>(`/schemas/${agentId}`);
+}
+
 export async function listLaunches(): Promise<Launch[]> {
 	return apiFetch<Launch[]>("/launches");
 }
