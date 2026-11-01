@@ -11,6 +11,7 @@ from .cognitive_loop import CognitiveLoop, LoopConfig
 from .context_builder import ContextBuilder
 from .llm import AgentError, estimate_cost_usd, extract_json, get_client, resolve_model
 from .output_validator import OutputValidator
+from .prompts import SAFETY_RULES
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +126,7 @@ class BaseAgent(abc.ABC):
         params: dict[str, Any] = {
             "model": self.model_id,
             "max_tokens": self.config.max_tokens,
-            "system": self.config.system_prompt,
+            "system": f"{self.config.system_prompt}{SAFETY_RULES}",
             "messages": messages,
         }
         if self.config.tools:
@@ -209,11 +210,13 @@ class BaseAgent(abc.ABC):
         """Render the launch brief so every agent sees the same product facts."""
         competitors = payload.get("competitors") or []
         return (
+            "<launch_brief>\n"
             f"product_name: {payload.get('product_name', '')}\n"
             f"description: {payload.get('description', '')}\n"
             f"target_market: {payload.get('target_market', '')}\n"
             f"competitors: {', '.join(competitors) if competitors else 'none given'}\n"
             f"launch_date: {payload.get('launch_date') or 'unspecified'}\n"
+            "</launch_brief>\n"
         )
 
     def _validate_output(self, raw: dict[str, Any]) -> dict[str, Any]:

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any, AsyncIterator
 
@@ -32,6 +33,28 @@ def _load_prompt(name: str) -> str:
 	return path.read_text(encoding="utf-8") if path.exists() else ""
 
 
+_URL_RE = re.compile(r"https?://[^\s\"'<>)\]]+")
+
+
+def _seen_urls(tool_calls: list[dict[str, Any]]) -> set[str]:
+	"""Every URL that actually appeared in a search tool result."""
+	urls: set[str] = set()
+	for call in tool_calls:
+		output = call.get("output")
+		urls.update(u.rstrip(".,;") for u in _URL_RE.findall(json.dumps(output, default=str)))
+	return urls
+
+
+def ground_sources(output: dict[str, Any], tool_calls: list[dict[str, Any]]) -> dict[str, Any]:
+	"""Null any trend source URL the model did not get from a search result (anti-fabrication)."""
+	seen = _seen_urls(tool_calls)
+	for trend in output.get("trends", []):
+		source = trend.get("source")
+		if source and not any(source.rstrip(".,;") == u for u in seen):
+			trend["source"] = None
+	return output
+
+
 class MarketIntelligenceAgent(BaseAgent):
 	def __init__(self) -> None:
 		super().__init__(
@@ -59,6 +82,7 @@ class MarketIntelligenceAgent(BaseAgent):
 		validated, tool_calls, thinking = await self._generate_validated(
 			messages, TavilySearchExecutor()
 		)
+		validated = ground_sources(validated, tool_calls)
 		return self.make_result(validated, thinking=thinking, tool_calls=tool_calls)
 
 	async def stream(self, payload: dict[str, Any]) -> AsyncIterator[str]:

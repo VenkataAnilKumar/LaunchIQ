@@ -51,7 +51,20 @@ def _product(text: str) -> str:
     return name or "the product"
 
 
-def _market(name: str) -> dict[str, Any]:
+def _tool_result_urls(messages: list[dict[str, Any]]) -> list[str]:
+    urls: list[str] = []
+    for msg in messages:
+        content = msg.get("content")
+        if isinstance(content, list):
+            for part in content:
+                if isinstance(part, dict) and part.get("type") == "tool_result":
+                    urls += re.findall(r"https?://[^\s\"'\\]+", str(part.get("content", "")))
+    return urls
+
+
+def _market(name: str, urls: list[str] | None = None) -> dict[str, Any]:
+    urls = urls or []
+    src = lambda i: urls[i] if i < len(urls) else None  # noqa: E731
     return {
         "market_size": "$4.2B globally (fake data)",
         "growth_rate": "18% CAGR (fake data)",
@@ -72,8 +85,8 @@ def _market(name: str) -> dict[str, Any]:
             },
         ],
         "trends": [
-            {"trend": "AI-assisted go-to-market planning", "relevance": "High", "source": "https://example.com/trend-1"},
-            {"trend": "Buyers expect self-serve onboarding", "relevance": "Medium", "source": "https://example.com/trend-2"},
+            {"trend": "AI-assisted go-to-market planning", "relevance": "High", "source": src(0)},
+            {"trend": "Buyers expect self-serve onboarding", "relevance": "Medium", "source": src(1)},
         ],
         "white_space": "Fast, research-backed launch plans for small teams",
         "recommended_positioning": f"Position {name} as the fastest path from idea to launch-ready",
@@ -204,7 +217,7 @@ class _FakeMessages:
             thinking = [_block(type="thinking", thinking="(fake) weighing channel trade-offs")]
 
         if "Generate market intelligence JSON" in prompt:
-            payload = _market(name)
+            payload = _market(name, _tool_result_urls(messages))
         elif "Generate audience insights" in prompt:
             payload = _audience()
         elif "Create launch strategy JSON" in prompt:
