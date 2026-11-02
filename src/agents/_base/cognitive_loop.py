@@ -6,7 +6,7 @@ Implements the Perceive → Reason → Act → Validate → Reflect cycle with:
 - Soft truncation of large tool results (configurable limit)
 - Configurable API retries for transient failures
 - Token / latency / tool-success observability logging
-- Optional post-generation reflection pass
+- Optional post-generation reflection pass (tokens counted)
 
 Public surface:
   - LoopConfig
@@ -57,6 +57,8 @@ class LoopConfig:
     total_input_tokens: int = 0
     total_output_tokens: int = 0
     total_latency_ms: int = 0
+    reflection_input_tokens: int = 0
+    reflection_output_tokens: int = 0
 
 
 class CognitiveLoop:
@@ -86,8 +88,8 @@ def _estimate_cost(input_tokens: int, output_tokens: int) -> float:
 def _truncate_tool_result(result: Any, limit: int = _TOOL_RESULT_CHAR_LIMIT) -> Any:
     """Truncate large tool results so they don't bloat the context window.
 
-    Small results pass through unchanged. Large dicts/strings are replaced with a
-    truncated marker that preserves the original length for debugging.
+    Small results pass through unchanged. For large results we try to preserve
+    structure (keys) when possible, otherwise fall back to a length-aware preview.
     """
     try:
         if isinstance(result, str):
@@ -98,7 +100,29 @@ def _truncate_tool_result(result: Any, limit: int = _TOOL_RESULT_CHAR_LIMIT) -> 
                 "original_length": len(result),
                 "preview": result[: limit - 80] + "...",
             }
-        # Serialize once to measure size
+        # Prefer keeping top-level keys for dicts when they fit
+        if isinstance(result, dict):
+            serialized = json.dumps(result, default=str)
+            if len(serialized) <= limit:
+                return result
+            # Keep a subset of keys that fit
+            kept = {}
+            remaining = limit - 100
+            for k, v in result.items():
+                chunk = json.dumps({k: v}, default=str)
+                if len(chunk) < remaining:
+                    kept[k] = v
+                    remaining -= len(chunk)
+                else:
+                    break
+            if kept:
+                return {
+                    "truncated": True,
+                    "original_keys": list(result.keys()),
+                    "kept": kept,
+                    "original_length": len(serialized),
+                }
+        # Generic fallback
         serialized = json.dumps(result, default=str)
         if len(serialized) <= limit:
             return result
@@ -121,7 +145,7 @@ async def _maybe_reflect(
     """Optional reflection pass. Returns improved text or the original.
 
     This is a soft, best-effort step. Failures are logged and ignored so the
-    primary answer is never blocked.
+    primary answer is never blocked. Tokens are counted on the config.
     """
     if not config.enable_reflection or not final_text.strip():
         return final_text
@@ -138,6 +162,13 @@ async def _maybe_reflect(
             messages=[{"role": "user", "content": reflect_prompt}],
         )
         resp = await pending if inspect.isawaitable(pending) else pending
+        # Count reflection tokens
+        usage = getattr(resp, "usage", None)
+        if usage:
+            config.reflection_input_tokens += int(getattr(usage, "input_tokens", 0) or 0)
+            config.reflection_output_tokens += int(getattr(usage, "output_tokens", 0) or 0)
+            config.total_input_tokens += config.reflection_input_tokens
+            config.total_output_tokens += config.reflection_output_tokens
         improved = ""
         for block in getattr(resp, "content", []) or []:
             if getattr(block, "type", None) == "text":
@@ -167,6 +198,7 @@ async def run_tool_loop(
     Observability (logged, non-blocking):
         - total tokens, rough cost, total latency, tool call count, tool error rate
         - avg latency per iteration, tool success rate
+        - reflection token counts
     """
     cfg = config or LoopConfig()
     # Allow callers to override max iterations via params (legacy compatibility)
@@ -329,17 +361,26 @@ async def run_tool_loop(
         "tool_success_rate": round(tool_success_rate, 3),
         "total_input_tokens": cfg.total_input_tokens,
         "total_output_tokens": cfg.total_output_tokens,
+        "reflection_input_tokens": cfg.reflection_input_tokens,
+        "reflection_output_tokens": cfg.reflection_output_tokens,
         "estimated_cost_usd": est_cost,
         "total_latency_ms": total_ms,
         "avg_latency_per_iter_ms": avg_latency,
     }
     logger.info("CognitiveLoop completed: %s", log_payload)
 
-    if cfg.cost_budget_usd is not None and est_cost > cfg.cost_budget_usd:
-        logger.warning(
-            "CognitiveLoop estimated cost $%.4f exceeded budget $%.4f",
-            est_cost,
-            cfg.cost_budget_usd,
-        )
+    if cfg.cost_budget_usd is not None:
+        if est_cost > cfg.cost_budget_usd:
+            logger.warning(
+                "CognitiveLoop estimated cost $%.4f exceeded budget $%.4f",
+                est_cost,
+                cfg.cost_budget_usd,
+            )
+        elif est_cost > cfg.cost_budget_usd * 0.8:
+            logger.info(
+                "CognitiveLoop estimated cost $%.4f approaching budget $%.4f (80%%)",
+                est_cost,
+                cfg.cost_budget_usd,
+            )
 
     return final_text, tool_log, thinking_text
