@@ -354,6 +354,13 @@ async def run_tool_loop(
         str(params.get("model", "")), cfg.total_input_tokens, cfg.total_output_tokens
     )
 
+    budget_status = "ok"
+    if cfg.cost_budget_usd is not None:
+        if est_cost > cfg.cost_budget_usd:
+            budget_status = "exceeded"
+        elif est_cost > cfg.cost_budget_usd * 0.8:
+            budget_status = "approaching"
+
     log_payload = {
         "iterations": iteration,
         "total_tool_calls": cfg.total_tool_calls,
@@ -366,6 +373,8 @@ async def run_tool_loop(
         "estimated_cost_usd": est_cost,
         "total_latency_ms": total_ms,
         "avg_latency_per_iter_ms": avg_latency,
+        "cost_budget_usd": cfg.cost_budget_usd,
+        "budget_status": budget_status,
     }
     logger.info("CognitiveLoop completed: %s", log_payload)
 

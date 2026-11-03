@@ -125,6 +125,21 @@ def test_truncate_tool_result_large():
     assert len(json.dumps(out)) < 3000  # type: ignore
 
 
+def test_truncate_tool_result_preserves_keys_when_possible():
+    """Large dict results prefer keeping top-level keys that fit (structure over raw preview)."""
+    large = {
+        "important": {"summary": "key finding"},
+        "verbose_log": "x" * 5000,
+        "another": "short",
+    }
+    out = _truncate_tool_result(large, limit=500)
+    assert isinstance(out, dict)
+    assert out.get("truncated") is True
+    assert "kept" in out
+    assert "important" in out["kept"] or "another" in out["kept"]
+    assert "original_keys" in out
+
+
 @pytest.mark.asyncio
 async def test_api_retry_on_transient_failure():
     """API call is retried once on exception, then succeeds."""
