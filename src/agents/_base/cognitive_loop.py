@@ -2,6 +2,7 @@
 
 Production reliability features:
 - Mid-loop cost budget enforcement (stops early, returns best text)
+- Soft warning at 80% of budget for observability
 - Hard max_tool_calls independent of cost
 - Structured truncation of tool results
 - Retry with backoff on transient API errors
@@ -82,6 +83,15 @@ async def run_tool_loop(
                         extra={"budget_status": "exceeded", "estimated_cost_usd": est},
                     )
                     return last_text or "[stopped: cost budget exceeded]", tool_log, thinking
+                elif est > 0.8 * cfg.cost_budget_usd:
+                    logger.info(
+                        "cost_budget_approaching estimated_cost_usd=%.4f budget=%.4f pct=%.1f iteration=%d",
+                        est,
+                        cfg.cost_budget_usd,
+                        (est / cfg.cost_budget_usd) * 100,
+                        iteration,
+                        extra={"budget_status": "approaching", "estimated_cost_usd": est},
+                    )
 
         # Extract content
         text_parts: list[str] = []
