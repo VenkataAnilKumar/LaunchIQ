@@ -6,7 +6,7 @@ Production reliability features:
 - Hard max_tool_calls independent of cost
 - Structured truncation of tool results
 - Retry with backoff on transient API errors
-- Optional reflection pass
+- Optional reflection pass with token accounting
 """
 from __future__ import annotations
 
@@ -110,7 +110,7 @@ async def run_tool_loop(
         if getattr(response, "stop_reason", None) != "tool_use" or not tool_uses:
             # Done
             if cfg.enable_reflection and last_text:
-                last_text = await _maybe_reflect(client, params, last_text, cfg)
+                last_text = await _maybe_reflect(client, params, last_text, cfg, model)
             return last_text, tool_log, thinking
 
         # Execute tools
@@ -191,8 +191,62 @@ def _truncate_tool_result(result: Any, limit: int = 2000) -> Any:
     }
 
 
-async def _maybe_reflect(client: Any, params: dict[str, Any], text: str, cfg: LoopConfig) -> str:
-    """Optional reflection pass. Currently a no-op stub that can be expanded."""
-    # Reflection is opt-in and currently skipped for structured outputs;
-    # a full implementation would make a second call and merge.
+async def _maybe_reflect(
+    client: Any,
+    params: dict[str, Any],
+    text: str,
+    cfg: LoopConfig,
+    model: str,
+) -> str:
+    """Optional short reflection pass. Accumulates tokens and re-checks budget."""
+    if not text or not cfg.enable_reflection:
+        return text
+
+    reflection_prompt = (
+        "You are reviewing the previous response for accuracy, completeness, and grounding. "
+        "If it is already high quality, reply with the original text unchanged. "
+        "Otherwise, provide a concise improved version. Do not add new facts."
+    )
+    reflect_messages = [
+        {"role": "user", "content": f"{reflection_prompt}\n\nOriginal response:\n{text[:2000]}"},
+    ]
+    reflect_params = {
+        "model": params.get("model", model),
+        "messages": reflect_messages,
+        "max_tokens": 800,
+    }
+
+    try:
+        response = await client.messages.create(**reflect_params)
+        usage = getattr(response, "usage", None)
+        if usage:
+            cfg.total_input_tokens += getattr(usage, "input_tokens", 0) or 0
+            cfg.total_output_tokens += getattr(usage, "output_tokens", 0) or 0
+            if cfg.cost_budget_usd is not None:
+                est = estimate_cost_usd(model, cfg.total_input_tokens, cfg.total_output_tokens)
+                if est > cfg.cost_budget_usd:
+                    logger.warning(
+                        "cost_budget_exceeded_during_reflection estimated_cost_usd=%.4f budget=%.4f",
+                        est,
+                        cfg.cost_budget_usd,
+                        extra={"budget_status": "exceeded", "phase": "reflection"},
+                    )
+                    return text  # keep original; do not use potentially over-budget reflection
+
+        text_parts: list[str] = []
+        for block in getattr(response, "content", []) or []:
+            if getattr(block, "type", None) == "text":
+                text_parts.append(getattr(block, "text", "") or "")
+        refined = "\n".join(t for t in text_parts if t).strip()
+        if refined:
+            logger.info(
+                "reflection_applied original_chars=%d refined_chars=%d",
+                len(text),
+                len(refined),
+                extra={"phase": "reflection", "tokens_added": True},
+            )
+            return refined
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("reflection_failed falling_back_to_original: %s", exc)
+
     return text
