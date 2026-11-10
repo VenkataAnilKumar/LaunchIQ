@@ -7,6 +7,7 @@ Production reliability features:
 - Structured truncation of tool results
 - Retry with backoff on transient API errors
 - Optional reflection pass with token accounting
+- Structured budget metric events for dashboarding
 """
 from __future__ import annotations
 
@@ -19,6 +20,30 @@ from typing import Any
 from .llm import AgentError, estimate_cost_usd
 
 logger = logging.getLogger(__name__)
+
+
+def _emit_budget_metric(status: str, estimated_cost_usd: float, budget_usd: float, **extra: Any) -> None:
+    """Emit a consistent structured event for cost-budget observability.
+
+    Always logs with metric='cognitive_loop_budget_event' so dashboards/alerts can key on it
+    without a dedicated metrics client. Extra fields are merged into the log record.
+    """
+    payload = {
+        "metric": "cognitive_loop_budget_event",
+        "budget_status": status,
+        "estimated_cost_usd": estimated_cost_usd,
+        "budget_usd": budget_usd,
+        **extra,
+    }
+    level = logging.WARNING if status == "exceeded" else logging.INFO
+    logger.log(
+        level,
+        "cognitive_loop_budget_event status=%s estimated_cost_usd=%.4f budget_usd=%.4f",
+        status,
+        estimated_cost_usd,
+        budget_usd,
+        extra=payload,
+    )
 
 
 @dataclass
@@ -75,22 +100,15 @@ async def run_tool_loop(
             if cfg.cost_budget_usd is not None:
                 est = estimate_cost_usd(model, cfg.total_input_tokens, cfg.total_output_tokens)
                 if est > cfg.cost_budget_usd:
-                    logger.warning(
-                        "cost_budget_exceeded estimated_cost_usd=%.4f budget=%.4f iteration=%d",
-                        est,
-                        cfg.cost_budget_usd,
-                        iteration,
-                        extra={"budget_status": "exceeded", "estimated_cost_usd": est},
-                    )
+                    _emit_budget_metric("exceeded", est, cfg.cost_budget_usd, iteration=iteration)
                     return last_text or "[stopped: cost budget exceeded]", tool_log, thinking
                 elif est > 0.8 * cfg.cost_budget_usd:
-                    logger.info(
-                        "cost_budget_approaching estimated_cost_usd=%.4f budget=%.4f pct=%.1f iteration=%d",
+                    _emit_budget_metric(
+                        "approaching",
                         est,
                         cfg.cost_budget_usd,
-                        (est / cfg.cost_budget_usd) * 100,
-                        iteration,
-                        extra={"budget_status": "approaching", "estimated_cost_usd": est},
+                        iteration=iteration,
+                        pct=(est / cfg.cost_budget_usd) * 100,
                     )
 
         # Extract content
@@ -225,12 +243,7 @@ async def _maybe_reflect(
             if cfg.cost_budget_usd is not None:
                 est = estimate_cost_usd(model, cfg.total_input_tokens, cfg.total_output_tokens)
                 if est > cfg.cost_budget_usd:
-                    logger.warning(
-                        "cost_budget_exceeded_during_reflection estimated_cost_usd=%.4f budget=%.4f",
-                        est,
-                        cfg.cost_budget_usd,
-                        extra={"budget_status": "exceeded", "phase": "reflection"},
-                    )
+                    _emit_budget_metric("exceeded", est, cfg.cost_budget_usd, phase="reflection")
                     return text  # keep original; do not use potentially over-budget reflection
 
         text_parts: list[str] = []
