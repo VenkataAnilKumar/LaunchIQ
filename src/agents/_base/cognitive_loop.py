@@ -8,6 +8,7 @@ Production reliability features:
 - Retry with backoff on transient API errors
 - Optional reflection pass with token accounting
 - Structured budget metric events for dashboarding
+- Structured tool-call metric events for dashboarding
 """
 from __future__ import annotations
 
@@ -42,6 +43,30 @@ def _emit_budget_metric(status: str, estimated_cost_usd: float, budget_usd: floa
         status,
         estimated_cost_usd,
         budget_usd,
+        extra=payload,
+    )
+
+
+def _emit_tool_metric(status: str, tool_calls_made: int, max_tool_calls: int, **extra: Any) -> None:
+    """Emit a consistent structured event for tool-call limit observability.
+
+    Always logs with metric='cognitive_loop_tool_event' so dashboards/alerts can key on it
+    without a dedicated metrics client.
+    """
+    payload = {
+        "metric": "cognitive_loop_tool_event",
+        "tool_status": status,
+        "tool_calls_made": tool_calls_made,
+        "max_tool_calls": max_tool_calls,
+        **extra,
+    }
+    level = logging.WARNING if status == "limit_reached" else logging.INFO
+    logger.log(
+        level,
+        "cognitive_loop_tool_event status=%s tool_calls_made=%d max_tool_calls=%d",
+        status,
+        tool_calls_made,
+        max_tool_calls,
         extra=payload,
     )
 
@@ -135,10 +160,11 @@ async def run_tool_loop(
         tool_results: list[dict[str, Any]] = []
         for tu in tool_uses:
             if cfg.tool_calls_made >= cfg.max_tool_calls:
-                logger.warning(
-                    "max_tool_calls_reached limit=%d iteration=%d",
+                _emit_tool_metric(
+                    "limit_reached",
+                    cfg.tool_calls_made,
                     cfg.max_tool_calls,
-                    iteration,
+                    iteration=iteration,
                 )
                 return last_text or "[stopped: max tool calls reached]", tool_log, thinking
 
