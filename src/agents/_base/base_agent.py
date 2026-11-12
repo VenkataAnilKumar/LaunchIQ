@@ -27,6 +27,8 @@ class AgentConfig(BaseModel):
     thinking_budget: int = 5000
     tools: list[dict[str, Any]] = []
     system_prompt: str = ""
+    # Optional per-agent override for the CognitiveLoop hard tool-call cap (default 8).
+    max_tool_calls: int | None = None
 
 
 class AgentResult(BaseModel):
@@ -56,7 +58,10 @@ class BaseAgent(abc.ABC):
     def __init__(self, config: AgentConfig) -> None:
         self.config = config
         # Reflection rewrites free text and can corrupt structured JSON, so it is opt-in.
-        self.loop = CognitiveLoop(LoopConfig(max_iterations=10, enable_reflection=False))
+        loop_cfg = LoopConfig(max_iterations=10, enable_reflection=False)
+        if config.max_tool_calls is not None:
+            loop_cfg.max_tool_calls = max(1, int(config.max_tool_calls))
+        self.loop = CognitiveLoop(loop_cfg)
         self._input_tokens = 0
         self._output_tokens = 0
         self.context_builder = ContextBuilder()
@@ -159,6 +164,7 @@ class BaseAgent(abc.ABC):
             enable_reflection=base.enable_reflection,
             max_api_retries=base.max_api_retries,
             cost_budget_usd=base.cost_budget_usd,
+            max_tool_calls=base.max_tool_calls,
             tool_result_char_limit=base.tool_result_char_limit,
             tool_timeout_seconds=base.tool_timeout_seconds,
             retry_backoff_seconds=base.retry_backoff_seconds,
