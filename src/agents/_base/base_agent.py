@@ -29,6 +29,8 @@ class AgentConfig(BaseModel):
     system_prompt: str = ""
     # Optional per-agent override for the CognitiveLoop hard tool-call cap (default 8).
     max_tool_calls: int | None = None
+    # Optional per-agent override for the optional reflection pass (default False).
+    enable_reflection: bool | None = None
 
 
 class AgentResult(BaseModel):
@@ -61,6 +63,8 @@ class BaseAgent(abc.ABC):
         loop_cfg = LoopConfig(max_iterations=10, enable_reflection=False)
         if config.max_tool_calls is not None:
             loop_cfg.max_tool_calls = max(1, int(config.max_tool_calls))
+        if config.enable_reflection is not None:
+            loop_cfg.enable_reflection = bool(config.enable_reflection)
         self.loop = CognitiveLoop(loop_cfg)
         self._input_tokens = 0
         self._output_tokens = 0

@@ -87,6 +87,13 @@ class LoopConfig:
     tool_calls_made: int = 0
 
 
+class CognitiveLoop:
+    """Thin wrapper that holds a LoopConfig for BaseAgent compatibility."""
+
+    def __init__(self, config: LoopConfig) -> None:
+        self.config = config
+
+
 async def run_tool_loop(
     client: Any,
     params: dict[str, Any],
