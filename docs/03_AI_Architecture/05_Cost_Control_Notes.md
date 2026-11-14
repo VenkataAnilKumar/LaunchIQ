@@ -10,10 +10,11 @@
 - 2026-11-11: Structured tool-call metric events (`metric=cognitive_loop_tool_event`) emitted when the hard max_tool_calls limit is reached. Consistent payload enables dashboard alerts without a metrics library.
 - 2026-11-12: `max_tool_calls` now flows correctly through BaseAgent._call_with_tools and is configurable per agent via AgentConfig.max_tool_calls.
 - 2026-11-13: Reflection pass is now configurable per agent via AgentConfig.enable_reflection (default remains False).
+- 2026-11-14: Structured reflection metric events (`metric=cognitive_loop_reflection_event`) emitted with change status, character counts, and delta. Enables quality and cost monitoring of the optional pass.
 
 ## Rationale
 
-Prevents runaway spend on long tool chains or repeated reflections while preserving partial useful output. The tool-call cap provides a second independent safety net even when token pricing estimates are imperfect. The 80% approaching signal and explicit metric events (budget and tool) enable proactive HITL or alerting before a hard stop. Reflection is opt-in and budget-aware so quality improvements do not silently exceed limits. Per-agent tool budgets and reflection flags let higher-reasoning agents (strategy) use more tools or reflection without raising the global default.
+Prevents runaway spend on long tool chains or repeated reflections while preserving partial useful output. The tool-call cap provides a second independent safety net even when token pricing estimates are imperfect. The 80% approaching signal and explicit metric events (budget, tool, and reflection) enable proactive HITL or alerting before a hard stop. Reflection is opt-in and budget-aware so quality improvements do not silently exceed limits. Per-agent tool budgets and reflection flags let higher-reasoning agents (strategy) use more tools or reflection without raising the global default. Reflection metrics make the quality impact of the pass measurable.
 
 ## Suggested Next Steps
 
@@ -21,12 +22,13 @@ Prevents runaway spend on long tool chains or repeated reflections while preserv
 2. ~~Emit structured events for tool-call limit so dashboards can alert.~~ **Done 2026-11-11** (structured log events).
 3. ~~Per-agent configurable tool-call budgets (strategy agent may need more than market).~~ **Done 2026-11-12** (AgentConfig.max_tool_calls).
 4. ~~Make reflection configurable per agent (e.g., only strategy).~~ **Done 2026-11-13** (AgentConfig.enable_reflection).
-5. Optional: surface approaching status to the review UI for human awareness.
-6. Add a quality eval for the reflection improvement.
+5. ~~Structured reflection metric events for quality/cost tracking.~~ **Done 2026-11-14**.
+6. Optional: surface approaching status to the review UI for human awareness.
+7. Add a quality eval for the reflection improvement.
 
 ## References
 
-- `src/agents/_base/cognitive_loop.py` (`_emit_budget_metric`, `_emit_tool_metric`, `run_tool_loop`, `CognitiveLoop`)
+- `src/agents/_base/cognitive_loop.py` (`_emit_budget_metric`, `_emit_tool_metric`, `_emit_reflection_metric`, `run_tool_loop`, `CognitiveLoop`)
 - `src/agents/_base/base_agent.py` (`AgentConfig`, `_call_with_tools`)
 - `src/agents/_base/tests/test_cognitive_loop_budget.py`
 - `src/agents/_base/tests/test_cognitive_loop_max_tools.py`

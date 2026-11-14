@@ -64,3 +64,33 @@ async def test_reflection_respects_budget_and_keeps_original_on_breach(caplog):
 
     assert text == "Original."
     assert any("reflection" in rec.message.lower() or "budget" in rec.message.lower() for rec in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_reflection_emits_structured_metric(caplog):
+    """Reflection path emits a structured cognitive_loop_reflection_event."""
+    mock_client = MagicMock()
+
+    resp1 = MagicMock()
+    resp1.stop_reason = "end_turn"
+    resp1.content = [MagicMock(type="text", text="Original draft.")]
+    resp1.usage = MagicMock(input_tokens=50, output_tokens=20)
+
+    resp2 = MagicMock()
+    resp2.stop_reason = "end_turn"
+    resp2.content = [MagicMock(type="text", text="Improved draft with more detail.")]
+    resp2.usage = MagicMock(input_tokens=40, output_tokens=25)
+
+    mock_client.messages.create.side_effect = [resp1, resp2]
+
+    params = {"messages": [{"role": "user", "content": "test"}], "model": "claude-sonnet-4-6"}
+    cfg = LoopConfig(enable_reflection=True)
+
+    with caplog.at_level("INFO"):
+        text, _, _ = await run_tool_loop(mock_client, params, None, config=cfg)
+
+    assert "Improved" in text
+    assert any("cognitive_loop_reflection_event" in rec.message for rec in caplog.records)
+    metric_recs = [rec for rec in caplog.records if "cognitive_loop_reflection_event" in rec.message]
+    assert metric_recs
+    assert any(getattr(rec, "changed", None) is True or "changed=True" in rec.message for rec in metric_recs)

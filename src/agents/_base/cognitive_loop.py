@@ -9,6 +9,7 @@ Production reliability features:
 - Optional reflection pass with token accounting
 - Structured budget metric events for dashboarding
 - Structured tool-call metric events for dashboarding
+- Structured reflection metric events for dashboarding
 """
 from __future__ import annotations
 
@@ -67,6 +68,36 @@ def _emit_tool_metric(status: str, tool_calls_made: int, max_tool_calls: int, **
         status,
         tool_calls_made,
         max_tool_calls,
+        extra=payload,
+    )
+
+
+def _emit_reflection_metric(
+    changed: bool,
+    original_chars: int,
+    refined_chars: int,
+    **extra: Any,
+) -> None:
+    """Emit a consistent structured event for reflection observability.
+
+    Always logs with metric='cognitive_loop_reflection_event' so dashboards can track
+    quality impact and cost of the optional pass without a metrics client.
+    """
+    delta = refined_chars - original_chars
+    payload = {
+        "metric": "cognitive_loop_reflection_event",
+        "changed": changed,
+        "original_chars": original_chars,
+        "refined_chars": refined_chars,
+        "char_delta": delta,
+        **extra,
+    }
+    logger.info(
+        "cognitive_loop_reflection_event changed=%s original_chars=%d refined_chars=%d char_delta=%d",
+        changed,
+        original_chars,
+        refined_chars,
+        delta,
         extra=payload,
     )
 
@@ -253,6 +284,7 @@ async def _maybe_reflect(
     if not text or not cfg.enable_reflection:
         return text
 
+    original_chars = len(text)
     reflection_prompt = (
         "You are reviewing the previous response for accuracy, completeness, and grounding. "
         "If it is already high quality, reply with the original text unchanged. "
@@ -277,6 +309,7 @@ async def _maybe_reflect(
                 est = estimate_cost_usd(model, cfg.total_input_tokens, cfg.total_output_tokens)
                 if est > cfg.cost_budget_usd:
                     _emit_budget_metric("exceeded", est, cfg.cost_budget_usd, phase="reflection")
+                    _emit_reflection_metric(False, original_chars, original_chars, budget_exceeded=True)
                     return text  # keep original; do not use potentially over-budget reflection
 
         text_parts: list[str] = []
@@ -285,6 +318,8 @@ async def _maybe_reflect(
                 text_parts.append(getattr(block, "text", "") or "")
         refined = "\n".join(t for t in text_parts if t).strip()
         if refined:
+            changed = refined != text
+            _emit_reflection_metric(changed, original_chars, len(refined))
             logger.info(
                 "reflection_applied original_chars=%d refined_chars=%d",
                 len(text),
@@ -292,7 +327,10 @@ async def _maybe_reflect(
                 extra={"phase": "reflection", "tokens_added": True},
             )
             return refined
+        else:
+            _emit_reflection_metric(False, original_chars, original_chars, empty_response=True)
     except Exception as exc:  # noqa: BLE001
         logger.warning("reflection_failed falling_back_to_original: %s", exc)
+        _emit_reflection_metric(False, original_chars, original_chars, error=str(exc)[:200])
 
     return text
