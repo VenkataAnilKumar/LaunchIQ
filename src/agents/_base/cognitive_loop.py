@@ -10,6 +10,7 @@ Production reliability features:
 - Structured budget metric events for dashboarding
 - Structured tool-call metric events for dashboarding
 - Structured reflection metric events for dashboarding
+- Structured truncation metric events for dashboarding
 """
 from __future__ import annotations
 
@@ -98,6 +99,33 @@ def _emit_reflection_metric(
         original_chars,
         refined_chars,
         delta,
+        extra=payload,
+    )
+
+
+def _emit_truncation_metric(
+    tool_name: str,
+    original_length: int,
+    limit: int,
+    **extra: Any,
+) -> None:
+    """Emit a consistent structured event when a tool result is truncated.
+
+    Always logs with metric='cognitive_loop_truncation_event' so dashboards can track
+    context pressure from large tool outputs.
+    """
+    payload = {
+        "metric": "cognitive_loop_truncation_event",
+        "tool_name": tool_name,
+        "original_length": original_length,
+        "limit": limit,
+        **extra,
+    }
+    logger.info(
+        "cognitive_loop_truncation_event tool=%s original_length=%d limit=%d",
+        tool_name,
+        original_length,
+        limit,
         extra=payload,
     )
 
@@ -220,7 +248,7 @@ async def run_tool_loop(
             except Exception as exc:  # noqa: BLE001
                 result = {"error": str(exc)}
 
-            truncated = _truncate_tool_result(result, cfg.tool_result_char_limit)
+            truncated = _truncate_tool_result(result, cfg.tool_result_char_limit, tool_name=name)
             tool_log.append({"tool_name": name, "input": inp, "output": truncated})
             tool_results.append(
                 {
@@ -240,13 +268,18 @@ async def run_tool_loop(
     return last_text, tool_log, thinking
 
 
-def _truncate_tool_result(result: Any, limit: int = 2000) -> Any:
-    """Prefer structured truncation that keeps top-level keys when possible."""
+def _truncate_tool_result(result: Any, limit: int = 2000, tool_name: str = "unknown") -> Any:
+    """Prefer structured truncation that keeps top-level keys when possible.
+
+    Emits a structured truncation metric when truncation occurs.
+    """
     if result is None:
         return result
     text = json.dumps(result) if not isinstance(result, str) else result
     if len(text) <= limit:
         return result
+
+    _emit_truncation_metric(tool_name, len(text), limit)
 
     if isinstance(result, dict):
         # Keep as many top-level keys as fit
