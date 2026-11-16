@@ -2,7 +2,7 @@
 
 Production reliability features:
 - Mid-loop cost budget enforcement (stops early, returns best text)
-- Soft warning at 80% of budget for observability
+- Soft warning at configurable % of budget for observability (default 80%)
 - Hard max_tool_calls independent of cost
 - Structured truncation of tool results
 - Retry with backoff on transient API errors
@@ -11,6 +11,7 @@ Production reliability features:
 - Structured tool-call metric events for dashboarding
 - Structured reflection metric events for dashboarding
 - Structured truncation metric events for dashboarding
+- Structured iteration metric events for dashboarding
 """
 from __future__ import annotations
 
@@ -130,6 +131,25 @@ def _emit_truncation_metric(
     )
 
 
+def _emit_iteration_metric(max_iterations: int, **extra: Any) -> None:
+    """Emit a consistent structured event when the max iteration limit is reached.
+
+    Always logs with metric='cognitive_loop_iteration_event' so dashboards can track
+    loops that exhaust their iteration budget.
+    """
+    payload = {
+        "metric": "cognitive_loop_iteration_event",
+        "iteration_status": "max_reached",
+        "max_iterations": max_iterations,
+        **extra,
+    }
+    logger.warning(
+        "cognitive_loop_iteration_event status=max_reached max_iterations=%d",
+        max_iterations,
+        extra=payload,
+    )
+
+
 @dataclass
 class LoopConfig:
     max_iterations: int = 10
@@ -140,6 +160,8 @@ class LoopConfig:
     tool_result_char_limit: int = 2000
     tool_timeout_seconds: float = 30.0
     retry_backoff_seconds: float = 1.0
+    # Soft warning threshold as a fraction of cost_budget_usd (default 0.8 = 80%).
+    budget_approaching_threshold: float = 0.8
     # Accumulated by the loop
     total_input_tokens: int = 0
     total_output_tokens: int = 0
@@ -166,6 +188,7 @@ async def run_tool_loop(
     tool_log: list[dict[str, Any]] = []
     last_text = ""
     thinking: str | None = None
+    approaching_thresh = max(0.0, min(1.0, float(getattr(cfg, "budget_approaching_threshold", 0.8) or 0.8)))
 
     for iteration in range(cfg.max_iterations):
         # --- API call with retries ---
@@ -193,13 +216,14 @@ async def run_tool_loop(
                 if est > cfg.cost_budget_usd:
                     _emit_budget_metric("exceeded", est, cfg.cost_budget_usd, iteration=iteration)
                     return last_text or "[stopped: cost budget exceeded]", tool_log, thinking
-                elif est > 0.8 * cfg.cost_budget_usd:
+                elif est > approaching_thresh * cfg.cost_budget_usd:
                     _emit_budget_metric(
                         "approaching",
                         est,
                         cfg.cost_budget_usd,
                         iteration=iteration,
                         pct=(est / cfg.cost_budget_usd) * 100,
+                        threshold=approaching_thresh,
                     )
 
         # Extract content
@@ -264,6 +288,7 @@ async def run_tool_loop(
         messages.append({"role": "user", "content": tool_results})
         params["messages"] = messages
 
+    _emit_iteration_metric(cfg.max_iterations)
     logger.warning("max_iterations_reached limit=%d", cfg.max_iterations)
     return last_text, tool_log, thinking
 
