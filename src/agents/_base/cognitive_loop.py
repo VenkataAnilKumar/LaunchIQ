@@ -12,6 +12,7 @@ Production reliability features:
 - Structured reflection metric events for dashboarding
 - Structured truncation metric events for dashboarding
 - Structured iteration metric events for dashboarding
+- Structured completion metric events for dashboarding
 """
 from __future__ import annotations
 
@@ -150,6 +151,26 @@ def _emit_iteration_metric(max_iterations: int, **extra: Any) -> None:
     )
 
 
+def _emit_completion_metric(iterations_used: int, tool_calls_made: int, **extra: Any) -> None:
+    """Emit a consistent structured event when the loop completes normally.
+
+    Always logs with metric='cognitive_loop_completion_event' so dashboards can track
+    successful loop outcomes, iteration efficiency, and tool usage.
+    """
+    payload = {
+        "metric": "cognitive_loop_completion_event",
+        "iterations_used": iterations_used,
+        "tool_calls_made": tool_calls_made,
+        **extra,
+    }
+    logger.info(
+        "cognitive_loop_completion_event iterations=%d tool_calls=%d",
+        iterations_used,
+        tool_calls_made,
+        extra=payload,
+    )
+
+
 @dataclass
 class LoopConfig:
     max_iterations: int = 10
@@ -244,6 +265,7 @@ async def run_tool_loop(
             # Done
             if cfg.enable_reflection and last_text:
                 last_text = await _maybe_reflect(client, params, last_text, cfg, model)
+            _emit_completion_metric(iteration + 1, cfg.tool_calls_made)
             return last_text, tool_log, thinking
 
         # Execute tools
