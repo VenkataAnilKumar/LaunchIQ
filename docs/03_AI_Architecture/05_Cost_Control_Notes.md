@@ -14,6 +14,7 @@
 - 2026-11-15: Structured truncation metric events (`metric=cognitive_loop_truncation_event`) emitted when tool results are truncated. Enables monitoring of context pressure from large tool outputs.
 - 2026-11-16: Soft budget approaching threshold is now configurable via LoopConfig.budget_approaching_threshold (default 0.8). Structured iteration metric events (`metric=cognitive_loop_iteration_event`) emitted when max_iterations is reached.
 - 2026-11-17: Structured completion metric events (`metric=cognitive_loop_completion_event`) emitted on normal loop exits with iterations used and tool calls made.
+- 2026-11-18: Unit test coverage added for the completion metric event.
 
 ## Rationale
 
@@ -29,8 +30,9 @@ Prevents runaway spend on long tool chains or repeated reflections while preserv
 6. ~~Structured truncation metric events for context pressure tracking.~~ **Done 2026-11-15**.
 7. ~~Make soft budget threshold configurable and emit max-iterations metric.~~ **Done 2026-11-16**.
 8. ~~Structured completion metric events for successful outcomes.~~ **Done 2026-11-17**.
-9. Optional: surface approaching status to the review UI for human awareness.
-10. Add a quality eval for the reflection improvement.
+9. ~~Unit test for completion metric.~~ **Done 2026-11-18**.
+10. Optional: surface approaching status to the review UI for human awareness.
+11. Add a quality eval for the reflection improvement.
 
 ## References
 
@@ -39,3 +41,4 @@ Prevents runaway spend on long tool chains or repeated reflections while preserv
 - `src/agents/_base/tests/test_cognitive_loop_budget.py`
 - `src/agents/_base/tests/test_cognitive_loop_max_tools.py`
 - `src/agents/_base/tests/test_cognitive_loop_reflection.py`
+- `src/agents/_base/tests/test_cognitive_loop_completion.py`
