@@ -15,10 +15,11 @@
 - 2026-11-16: Soft budget approaching threshold is now configurable via LoopConfig.budget_approaching_threshold (default 0.8). Structured iteration metric events (`metric=cognitive_loop_iteration_event`) emitted when max_iterations is reached.
 - 2026-11-17: Structured completion metric events (`metric=cognitive_loop_completion_event`) emitted on normal loop exits with iterations used and tool calls made.
 - 2026-11-18: Unit test coverage added for the completion metric event.
+- 2026-11-19: Structured tool error metric events (`metric=cognitive_loop_tool_error_event`) emitted when a tool executor raises an exception. Includes tool name and truncated error for reliability monitoring.
 
 ## Rationale
 
-Prevents runaway spend on long tool chains or repeated reflections while preserving partial useful output. The tool-call cap provides a second independent safety net even when token pricing estimates are imperfect. The configurable approaching signal and explicit metric events (budget, tool, reflection, truncation, iteration, and completion) enable proactive HITL or alerting before a hard stop, and make successful outcomes measurable. Reflection is opt-in and budget-aware so quality improvements do not silently exceed limits. Per-agent tool budgets and reflection flags let higher-reasoning agents (strategy) use more tools or reflection without raising the global default. Reflection, truncation, iteration, and completion metrics make the quality, context, loop-exhaustion, and efficiency impact of the loop measurable.
+Prevents runaway spend on long tool chains or repeated reflections while preserving partial useful output. The tool-call cap provides a second independent safety net even when token pricing estimates are imperfect. The configurable approaching signal and explicit metric events (budget, tool, tool error, reflection, truncation, iteration, and completion) enable proactive HITL or alerting before a hard stop, and make successful outcomes and failures measurable. Reflection is opt-in and budget-aware so quality improvements do not silently exceed limits. Per-agent tool budgets and reflection flags let higher-reasoning agents (strategy) use more tools or reflection without raising the global default. Reflection, truncation, iteration, completion, and tool error metrics make the quality, context, loop-exhaustion, efficiency, and reliability impact of the loop measurable.
 
 ## Suggested Next Steps
 
@@ -31,14 +32,16 @@ Prevents runaway spend on long tool chains or repeated reflections while preserv
 7. ~~Make soft budget threshold configurable and emit max-iterations metric.~~ **Done 2026-11-16**.
 8. ~~Structured completion metric events for successful outcomes.~~ **Done 2026-11-17**.
 9. ~~Unit test for completion metric.~~ **Done 2026-11-18**.
-10. Optional: surface approaching status to the review UI for human awareness.
-11. Add a quality eval for the reflection improvement.
+10. ~~Structured tool error metric events for reliability tracking.~~ **Done 2026-11-19**.
+11. Optional: surface approaching status to the review UI for human awareness.
+12. Add a quality eval for the reflection improvement.
 
 ## References
 
-- `src/agents/_base/cognitive_loop.py` (`_emit_budget_metric`, `_emit_tool_metric`, `_emit_reflection_metric`, `_emit_truncation_metric`, `_emit_iteration_metric`, `_emit_completion_metric`, `run_tool_loop`, `CognitiveLoop`, `LoopConfig`)
+- `src/agents/_base/cognitive_loop.py` (`_emit_budget_metric`, `_emit_tool_metric`, `_emit_tool_error_metric`, `_emit_reflection_metric`, `_emit_truncation_metric`, `_emit_iteration_metric`, `_emit_completion_metric`, `run_tool_loop`, `CognitiveLoop`, `LoopConfig`)
 - `src/agents/_base/base_agent.py` (`AgentConfig`, `_call_with_tools`)
 - `src/agents/_base/tests/test_cognitive_loop_budget.py`
 - `src/agents/_base/tests/test_cognitive_loop_max_tools.py`
 - `src/agents/_base/tests/test_cognitive_loop_reflection.py`
 - `src/agents/_base/tests/test_cognitive_loop_completion.py`
+- `src/agents/_base/tests/test_cognitive_loop_tool_error.py`
