@@ -9,6 +9,7 @@ Production reliability features:
 - Optional reflection pass with token accounting
 - Structured budget metric events for dashboarding
 - Structured tool-call metric events for dashboarding
+- Structured tool error metric events for dashboarding
 - Structured reflection metric events for dashboarding
 - Structured truncation metric events for dashboarding
 - Structured iteration metric events for dashboarding
@@ -71,6 +72,26 @@ def _emit_tool_metric(status: str, tool_calls_made: int, max_tool_calls: int, **
         status,
         tool_calls_made,
         max_tool_calls,
+        extra=payload,
+    )
+
+
+def _emit_tool_error_metric(tool_name: str, error: str, **extra: Any) -> None:
+    """Emit a consistent structured event when a tool execution fails.
+
+    Always logs with metric='cognitive_loop_tool_error_event' so dashboards can track
+    tool reliability issues without a metrics client.
+    """
+    payload = {
+        "metric": "cognitive_loop_tool_error_event",
+        "tool_name": tool_name,
+        "error": error,
+        **extra,
+    }
+    logger.warning(
+        "cognitive_loop_tool_error_event tool=%s error=%s",
+        tool_name,
+        error,
         extra=payload,
     )
 
@@ -293,6 +314,7 @@ async def run_tool_loop(
                     )
             except Exception as exc:  # noqa: BLE001
                 result = {"error": str(exc)}
+                _emit_tool_error_metric(name, str(exc)[:200], iteration=iteration)
 
             truncated = _truncate_tool_result(result, cfg.tool_result_char_limit, tool_name=name)
             tool_log.append({"tool_name": name, "input": inp, "output": truncated})
