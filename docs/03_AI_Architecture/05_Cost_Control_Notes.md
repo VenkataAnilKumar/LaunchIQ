@@ -16,10 +16,11 @@
 - 2026-11-17: Structured completion metric events (`metric=cognitive_loop_completion_event`) emitted on normal loop exits with iterations used and tool calls made.
 - 2026-11-18: Unit test coverage added for the completion metric event.
 - 2026-11-19: Structured tool error metric events (`metric=cognitive_loop_tool_error_event`) emitted when a tool executor raises an exception. Includes tool name and truncated error for reliability monitoring.
+- 2026-11-20: Structured tool timeout metric events (`metric=cognitive_loop_tool_timeout_event`) emitted when a tool times out. Distinguishes slow tools from other errors; also still emits the general tool error metric with a timeout flag.
 
 ## Rationale
 
-Prevents runaway spend on long tool chains or repeated reflections while preserving partial useful output. The tool-call cap provides a second independent safety net even when token pricing estimates are imperfect. The configurable approaching signal and explicit metric events (budget, tool, tool error, reflection, truncation, iteration, and completion) enable proactive HITL or alerting before a hard stop, and make successful outcomes and failures measurable. Reflection is opt-in and budget-aware so quality improvements do not silently exceed limits. Per-agent tool budgets and reflection flags let higher-reasoning agents (strategy) use more tools or reflection without raising the global default. Reflection, truncation, iteration, completion, and tool error metrics make the quality, context, loop-exhaustion, efficiency, and reliability impact of the loop measurable.
+Prevents runaway spend on long tool chains or repeated reflections while preserving partial useful output. The tool-call cap provides a second independent safety net even when token pricing estimates are imperfect. The configurable approaching signal and explicit metric events (budget, tool, tool error, tool timeout, reflection, truncation, iteration, and completion) enable proactive HITL or alerting before a hard stop, and make successful outcomes and failures measurable. Reflection is opt-in and budget-aware so quality improvements do not silently exceed limits. Per-agent tool budgets and reflection flags let higher-reasoning agents (strategy) use more tools or reflection without raising the global default. Reflection, truncation, iteration, completion, tool error, and tool timeout metrics make the quality, context, loop-exhaustion, efficiency, and reliability impact of the loop measurable.
 
 ## Suggested Next Steps
 
@@ -33,15 +34,17 @@ Prevents runaway spend on long tool chains or repeated reflections while preserv
 8. ~~Structured completion metric events for successful outcomes.~~ **Done 2026-11-17**.
 9. ~~Unit test for completion metric.~~ **Done 2026-11-18**.
 10. ~~Structured tool error metric events for reliability tracking.~~ **Done 2026-11-19**.
-11. Optional: surface approaching status to the review UI for human awareness.
-12. Add a quality eval for the reflection improvement.
+11. ~~Structured tool timeout metric events for slow-tool tracking.~~ **Done 2026-11-20**.
+12. Optional: surface approaching status to the review UI for human awareness.
+13. Add a quality eval for the reflection improvement.
 
 ## References
 
-- `src/agents/_base/cognitive_loop.py` (`_emit_budget_metric`, `_emit_tool_metric`, `_emit_tool_error_metric`, `_emit_reflection_metric`, `_emit_truncation_metric`, `_emit_iteration_metric`, `_emit_completion_metric`, `run_tool_loop`, `CognitiveLoop`, `LoopConfig`)
+- `src/agents/_base/cognitive_loop.py` (`_emit_budget_metric`, `_emit_tool_metric`, `_emit_tool_error_metric`, `_emit_tool_timeout_metric`, `_emit_reflection_metric`, `_emit_truncation_metric`, `_emit_iteration_metric`, `_emit_completion_metric`, `run_tool_loop`, `CognitiveLoop`, `LoopConfig`)
 - `src/agents/_base/base_agent.py` (`AgentConfig`, `_call_with_tools`)
 - `src/agents/_base/tests/test_cognitive_loop_budget.py`
 - `src/agents/_base/tests/test_cognitive_loop_max_tools.py`
 - `src/agents/_base/tests/test_cognitive_loop_reflection.py`
 - `src/agents/_base/tests/test_cognitive_loop_completion.py`
 - `src/agents/_base/tests/test_cognitive_loop_tool_error.py`
+- `src/agents/_base/tests/test_cognitive_loop_tool_timeout.py`

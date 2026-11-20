@@ -10,6 +10,7 @@ Production reliability features:
 - Structured budget metric events for dashboarding
 - Structured tool-call metric events for dashboarding
 - Structured tool error metric events for dashboarding
+- Structured tool timeout metric events for dashboarding
 - Structured reflection metric events for dashboarding
 - Structured truncation metric events for dashboarding
 - Structured iteration metric events for dashboarding
@@ -92,6 +93,26 @@ def _emit_tool_error_metric(tool_name: str, error: str, **extra: Any) -> None:
         "cognitive_loop_tool_error_event tool=%s error=%s",
         tool_name,
         error,
+        extra=payload,
+    )
+
+
+def _emit_tool_timeout_metric(tool_name: str, timeout_seconds: float, **extra: Any) -> None:
+    """Emit a consistent structured event when a tool execution times out.
+
+    Always logs with metric='cognitive_loop_tool_timeout_event' so dashboards can track
+    slow or hanging tools separately from other errors.
+    """
+    payload = {
+        "metric": "cognitive_loop_tool_timeout_event",
+        "tool_name": tool_name,
+        "timeout_seconds": timeout_seconds,
+        **extra,
+    }
+    logger.warning(
+        "cognitive_loop_tool_timeout_event tool=%s timeout_seconds=%.1f",
+        tool_name,
+        timeout_seconds,
         extra=payload,
     )
 
@@ -312,6 +333,10 @@ async def run_tool_loop(
                         tool_executor.execute(name, inp),
                         timeout=cfg.tool_timeout_seconds,
                     )
+            except asyncio.TimeoutError:
+                result = {"error": f"tool timed out after {cfg.tool_timeout_seconds}s"}
+                _emit_tool_timeout_metric(name, cfg.tool_timeout_seconds, iteration=iteration)
+                _emit_tool_error_metric(name, result["error"][:200], iteration=iteration, timeout=True)
             except Exception as exc:  # noqa: BLE001
                 result = {"error": str(exc)}
                 _emit_tool_error_metric(name, str(exc)[:200], iteration=iteration)
