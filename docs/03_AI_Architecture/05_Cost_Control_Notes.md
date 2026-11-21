@@ -17,10 +17,11 @@
 - 2026-11-18: Unit test coverage added for the completion metric event.
 - 2026-11-19: Structured tool error metric events (`metric=cognitive_loop_tool_error_event`) emitted when a tool executor raises an exception. Includes tool name and truncated error for reliability monitoring.
 - 2026-11-20: Structured tool timeout metric events (`metric=cognitive_loop_tool_timeout_event`) emitted when a tool times out. Distinguishes slow tools from other errors; also still emits the general tool error metric with a timeout flag.
+- 2026-11-21: Structured LLM retry metric events (`metric=cognitive_loop_retry_event`) emitted when an API call is retried after a transient failure. Completes observability for API reliability.
 
 ## Rationale
 
-Prevents runaway spend on long tool chains or repeated reflections while preserving partial useful output. The tool-call cap provides a second independent safety net even when token pricing estimates are imperfect. The configurable approaching signal and explicit metric events (budget, tool, tool error, tool timeout, reflection, truncation, iteration, and completion) enable proactive HITL or alerting before a hard stop, and make successful outcomes and failures measurable. Reflection is opt-in and budget-aware so quality improvements do not silently exceed limits. Per-agent tool budgets and reflection flags let higher-reasoning agents (strategy) use more tools or reflection without raising the global default. Reflection, truncation, iteration, completion, tool error, and tool timeout metrics make the quality, context, loop-exhaustion, efficiency, and reliability impact of the loop measurable.
+Prevents runaway spend on long tool chains or repeated reflections while preserving partial useful output. The tool-call cap provides a second independent safety net even when token pricing estimates are imperfect. The configurable approaching signal and explicit metric events (budget, tool, tool error, tool timeout, LLM retry, reflection, truncation, iteration, and completion) enable proactive HITL or alerting before a hard stop, and make successful outcomes and failures measurable. Reflection is opt-in and budget-aware so quality improvements do not silently exceed limits. Per-agent tool budgets and reflection flags let higher-reasoning agents (strategy) use more tools or reflection without raising the global default. Reflection, truncation, iteration, completion, tool error, tool timeout, and retry metrics make the quality, context, loop-exhaustion, efficiency, and reliability impact of the loop measurable.
 
 ## Suggested Next Steps
 
@@ -35,12 +36,13 @@ Prevents runaway spend on long tool chains or repeated reflections while preserv
 9. ~~Unit test for completion metric.~~ **Done 2026-11-18**.
 10. ~~Structured tool error metric events for reliability tracking.~~ **Done 2026-11-19**.
 11. ~~Structured tool timeout metric events for slow-tool tracking.~~ **Done 2026-11-20**.
-12. Optional: surface approaching status to the review UI for human awareness.
-13. Add a quality eval for the reflection improvement.
+12. ~~Structured LLM retry metric events for transient API tracking.~~ **Done 2026-11-21**.
+13. Optional: surface approaching status to the review UI for human awareness.
+14. Add a quality eval for the reflection improvement.
 
 ## References
 
-- `src/agents/_base/cognitive_loop.py` (`_emit_budget_metric`, `_emit_tool_metric`, `_emit_tool_error_metric`, `_emit_tool_timeout_metric`, `_emit_reflection_metric`, `_emit_truncation_metric`, `_emit_iteration_metric`, `_emit_completion_metric`, `run_tool_loop`, `CognitiveLoop`, `LoopConfig`)
+- `src/agents/_base/cognitive_loop.py` (`_emit_budget_metric`, `_emit_tool_metric`, `_emit_tool_error_metric`, `_emit_tool_timeout_metric`, `_emit_retry_metric`, `_emit_reflection_metric`, `_emit_truncation_metric`, `_emit_iteration_metric`, `_emit_completion_metric`, `run_tool_loop`, `CognitiveLoop`, `LoopConfig`)
 - `src/agents/_base/base_agent.py` (`AgentConfig`, `_call_with_tools`)
 - `src/agents/_base/tests/test_cognitive_loop_budget.py`
 - `src/agents/_base/tests/test_cognitive_loop_max_tools.py`
@@ -48,3 +50,4 @@ Prevents runaway spend on long tool chains or repeated reflections while preserv
 - `src/agents/_base/tests/test_cognitive_loop_completion.py`
 - `src/agents/_base/tests/test_cognitive_loop_tool_error.py`
 - `src/agents/_base/tests/test_cognitive_loop_tool_timeout.py`
+- `src/agents/_base/tests/test_cognitive_loop_retry.py`

@@ -11,6 +11,7 @@ Production reliability features:
 - Structured tool-call metric events for dashboarding
 - Structured tool error metric events for dashboarding
 - Structured tool timeout metric events for dashboarding
+- Structured LLM retry metric events for dashboarding
 - Structured reflection metric events for dashboarding
 - Structured truncation metric events for dashboarding
 - Structured iteration metric events for dashboarding
@@ -113,6 +114,26 @@ def _emit_tool_timeout_metric(tool_name: str, timeout_seconds: float, **extra: A
         "cognitive_loop_tool_timeout_event tool=%s timeout_seconds=%.1f",
         tool_name,
         timeout_seconds,
+        extra=payload,
+    )
+
+
+def _emit_retry_metric(attempt: int, error: str, **extra: Any) -> None:
+    """Emit a consistent structured event when an LLM API call is retried.
+
+    Always logs with metric='cognitive_loop_retry_event' so dashboards can track
+    transient API reliability issues.
+    """
+    payload = {
+        "metric": "cognitive_loop_retry_event",
+        "attempt": attempt,
+        "error": error,
+        **extra,
+    }
+    logger.info(
+        "cognitive_loop_retry_event attempt=%d error=%s",
+        attempt,
+        error,
         extra=payload,
     )
 
@@ -265,6 +286,8 @@ async def run_tool_loop(
                 last_exc = exc
                 if attempt == cfg.max_api_retries:
                     raise AgentError(f"LLM call failed after retries: {exc}") from exc
+                if attempt > 0:
+                    _emit_retry_metric(attempt, str(exc)[:150], iteration=iteration)
                 await asyncio.sleep(cfg.retry_backoff_seconds * (2**attempt))
         if response is None:
             raise AgentError("No response from LLM") from last_exc
