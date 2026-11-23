@@ -15,7 +15,7 @@ Production reliability features:
 - Structured reflection metric events for dashboarding
 - Structured truncation metric events for dashboarding
 - Structured iteration metric events for dashboarding
-- Structured completion metric events for dashboarding
+- Structured completion metric events for dashboarding (now includes estimated cost)
 """
 from __future__ import annotations
 
@@ -214,11 +214,16 @@ def _emit_iteration_metric(max_iterations: int, **extra: Any) -> None:
     )
 
 
-def _emit_completion_metric(iterations_used: int, tool_calls_made: int, **extra: Any) -> None:
+def _emit_completion_metric(
+    iterations_used: int,
+    tool_calls_made: int,
+    estimated_cost_usd: float | None = None,
+    **extra: Any,
+) -> None:
     """Emit a consistent structured event when the loop completes normally.
 
     Always logs with metric='cognitive_loop_completion_event' so dashboards can track
-    successful loop outcomes, iteration efficiency, and tool usage.
+    successful loop outcomes, iteration efficiency, tool usage, and (when available) estimated cost.
     """
     payload = {
         "metric": "cognitive_loop_completion_event",
@@ -226,12 +231,14 @@ def _emit_completion_metric(iterations_used: int, tool_calls_made: int, **extra:
         "tool_calls_made": tool_calls_made,
         **extra,
     }
-    logger.info(
-        "cognitive_loop_completion_event iterations=%d tool_calls=%d",
-        iterations_used,
-        tool_calls_made,
-        extra=payload,
-    )
+    if estimated_cost_usd is not None:
+        payload["estimated_cost_usd"] = estimated_cost_usd
+    log_msg = "cognitive_loop_completion_event iterations=%d tool_calls=%d"
+    log_args = [iterations_used, tool_calls_made]
+    if estimated_cost_usd is not None:
+        log_msg += " estimated_cost_usd=%.4f"
+        log_args.append(estimated_cost_usd)
+    logger.info(log_msg, *log_args, extra=payload)
 
 
 @dataclass
@@ -330,7 +337,10 @@ async def run_tool_loop(
             # Done
             if cfg.enable_reflection and last_text:
                 last_text = await _maybe_reflect(client, params, last_text, cfg, model)
-            _emit_completion_metric(iteration + 1, cfg.tool_calls_made)
+            est_cost = None
+            if cfg.cost_budget_usd is not None and cfg.total_input_tokens + cfg.total_output_tokens > 0:
+                est_cost = estimate_cost_usd(model, cfg.total_input_tokens, cfg.total_output_tokens)
+            _emit_completion_metric(iteration + 1, cfg.tool_calls_made, estimated_cost_usd=est_cost)
             return last_text, tool_log, thinking
 
         # Execute tools
