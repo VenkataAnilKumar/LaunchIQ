@@ -19,6 +19,7 @@
 - 2026-11-20: Structured tool timeout metric events (`metric=cognitive_loop_tool_timeout_event`) emitted when a tool times out. Distinguishes slow tools from other errors; also still emits the general tool error metric with a timeout flag.
 - 2026-11-21: Structured LLM retry metric events (`metric=cognitive_loop_retry_event`) emitted when an API call is retried after a transient failure. Completes observability for API reliability.
 - 2026-11-23: Completion metric now includes estimated_cost_usd when a budget is configured, improving spend visibility on successful exits.
+- 2026-11-24: Completion metric always includes estimated_cost_usd when any tokens were used, independent of budget configuration. Unit test added.
 
 ## Rationale
 
@@ -38,7 +39,7 @@ Prevents runaway spend on long tool chains or repeated reflections while preserv
 10. ~~Structured tool error metric events for reliability tracking.~~ **Done 2026-11-19**.
 11. ~~Structured tool timeout metric events for slow-tool tracking.~~ **Done 2026-11-20**.
 12. ~~Structured LLM retry metric events for transient API tracking.~~ **Done 2026-11-21**.
-13. Include estimated cost in completion metric. **Done 2026-11-23**.
+13. Include estimated cost in completion metric. **Done 2026-11-23 / 2026-11-24** (always when tokens used).
 14. Optional: surface approaching status to the review UI for human awareness.
 15. Add a quality eval for the reflection improvement.
 

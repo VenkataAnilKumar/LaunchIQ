@@ -15,7 +15,7 @@ Production reliability features:
 - Structured reflection metric events for dashboarding
 - Structured truncation metric events for dashboarding
 - Structured iteration metric events for dashboarding
-- Structured completion metric events for dashboarding (now includes estimated cost)
+- Structured completion metric events for dashboarding (always includes estimated cost when tokens used)
 """
 from __future__ import annotations
 
@@ -338,7 +338,7 @@ async def run_tool_loop(
             if cfg.enable_reflection and last_text:
                 last_text = await _maybe_reflect(client, params, last_text, cfg, model)
             est_cost = None
-            if cfg.cost_budget_usd is not None and cfg.total_input_tokens + cfg.total_output_tokens > 0:
+            if cfg.total_input_tokens + cfg.total_output_tokens > 0:
                 est_cost = estimate_cost_usd(model, cfg.total_input_tokens, cfg.total_output_tokens)
             _emit_completion_metric(iteration + 1, cfg.tool_calls_made, estimated_cost_usd=est_cost)
             return last_text, tool_log, thinking
