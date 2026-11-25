@@ -9,8 +9,8 @@ Production reliability features:
 - Optional reflection pass with token accounting
 - Structured budget metric events for dashboarding
 - Structured tool-call metric events for dashboarding
-- Structured tool error metric events for dashboarding
-- Structured tool timeout metric events for dashboarding
+- Structured tool error metric events for dashboarding (includes estimated cost when available)
+- Structured tool timeout metric events for dashboarding (includes estimated cost when available)
 - Structured LLM retry metric events for dashboarding
 - Structured reflection metric events for dashboarding
 - Structured truncation metric events for dashboarding
@@ -78,11 +78,11 @@ def _emit_tool_metric(status: str, tool_calls_made: int, max_tool_calls: int, **
     )
 
 
-def _emit_tool_error_metric(tool_name: str, error: str, **extra: Any) -> None:
+def _emit_tool_error_metric(tool_name: str, error: str, estimated_cost_usd: float | None = None, **extra: Any) -> None:
     """Emit a consistent structured event when a tool execution fails.
 
     Always logs with metric='cognitive_loop_tool_error_event' so dashboards can track
-    tool reliability issues without a metrics client.
+    tool reliability issues without a metrics client. Includes estimated cost when available.
     """
     payload = {
         "metric": "cognitive_loop_tool_error_event",
@@ -90,19 +90,21 @@ def _emit_tool_error_metric(tool_name: str, error: str, **extra: Any) -> None:
         "error": error,
         **extra,
     }
-    logger.warning(
-        "cognitive_loop_tool_error_event tool=%s error=%s",
-        tool_name,
-        error,
-        extra=payload,
-    )
+    if estimated_cost_usd is not None:
+        payload["estimated_cost_usd"] = estimated_cost_usd
+    log_msg = "cognitive_loop_tool_error_event tool=%s error=%s"
+    log_args = [tool_name, error]
+    if estimated_cost_usd is not None:
+        log_msg += " estimated_cost_usd=%.4f"
+        log_args.append(estimated_cost_usd)
+    logger.warning(log_msg, *log_args, extra=payload)
 
 
-def _emit_tool_timeout_metric(tool_name: str, timeout_seconds: float, **extra: Any) -> None:
+def _emit_tool_timeout_metric(tool_name: str, timeout_seconds: float, estimated_cost_usd: float | None = None, **extra: Any) -> None:
     """Emit a consistent structured event when a tool execution times out.
 
     Always logs with metric='cognitive_loop_tool_timeout_event' so dashboards can track
-    slow or hanging tools separately from other errors.
+    slow or hanging tools separately from other errors. Includes estimated cost when available.
     """
     payload = {
         "metric": "cognitive_loop_tool_timeout_event",
@@ -110,12 +112,14 @@ def _emit_tool_timeout_metric(tool_name: str, timeout_seconds: float, **extra: A
         "timeout_seconds": timeout_seconds,
         **extra,
     }
-    logger.warning(
-        "cognitive_loop_tool_timeout_event tool=%s timeout_seconds=%.1f",
-        tool_name,
-        timeout_seconds,
-        extra=payload,
-    )
+    if estimated_cost_usd is not None:
+        payload["estimated_cost_usd"] = estimated_cost_usd
+    log_msg = "cognitive_loop_tool_timeout_event tool=%s timeout_seconds=%.1f"
+    log_args = [tool_name, timeout_seconds]
+    if estimated_cost_usd is not None:
+        log_msg += " estimated_cost_usd=%.4f"
+        log_args.append(estimated_cost_usd)
+    logger.warning(log_msg, *log_args, extra=payload)
 
 
 def _emit_retry_metric(attempt: int, error: str, **extra: Any) -> None:
@@ -358,6 +362,10 @@ async def run_tool_loop(
             name = getattr(tu, "name", "unknown")
             inp = getattr(tu, "input", {}) or {}
             tool_id = getattr(tu, "id", "")
+            # Current estimated cost for correlation with failures
+            current_est = None
+            if cfg.total_input_tokens + cfg.total_output_tokens > 0:
+                current_est = estimate_cost_usd(model, cfg.total_input_tokens, cfg.total_output_tokens)
             try:
                 if tool_executor is None:
                     result: Any = {"error": "no tool executor configured"}
@@ -368,11 +376,11 @@ async def run_tool_loop(
                     )
             except asyncio.TimeoutError:
                 result = {"error": f"tool timed out after {cfg.tool_timeout_seconds}s"}
-                _emit_tool_timeout_metric(name, cfg.tool_timeout_seconds, iteration=iteration)
-                _emit_tool_error_metric(name, result["error"][:200], iteration=iteration, timeout=True)
+                _emit_tool_timeout_metric(name, cfg.tool_timeout_seconds, estimated_cost_usd=current_est, iteration=iteration)
+                _emit_tool_error_metric(name, result["error"][:200], estimated_cost_usd=current_est, iteration=iteration, timeout=True)
             except Exception as exc:  # noqa: BLE001
                 result = {"error": str(exc)}
-                _emit_tool_error_metric(name, str(exc)[:200], iteration=iteration)
+                _emit_tool_error_metric(name, str(exc)[:200], estimated_cost_usd=current_est, iteration=iteration)
 
             truncated = _truncate_tool_result(result, cfg.tool_result_char_limit, tool_name=name)
             tool_log.append({"tool_name": name, "input": inp, "output": truncated})
