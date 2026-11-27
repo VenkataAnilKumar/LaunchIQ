@@ -22,10 +22,11 @@
 - 2026-11-24: Completion metric always includes estimated_cost_usd when any tokens were used, independent of budget configuration. Unit test added.
 - 2026-11-25: Tool error and timeout metrics now include estimated_cost_usd when tokens have been used, improving failure-to-spend correlation.
 - 2026-11-26: LLM retry metric now includes estimated_cost_usd when tokens have been used, improving retry-to-spend correlation.
+- 2026-11-27: Iteration and tool-limit metrics now include estimated_cost_usd when tokens have been used, improving limit-to-spend correlation.
 
 ## Rationale
 
-Prevents runaway spend on long tool chains or repeated reflections while preserving partial useful output. The tool-call cap provides a second independent safety net even when token pricing estimates are imperfect. The configurable approaching signal and explicit metric events (budget, tool, tool error with cost, tool timeout with cost, LLM retry with cost, reflection, truncation, iteration, and completion with cost) enable proactive HITL or alerting before a hard stop, and make successful outcomes, failures, retries, and actual costs measurable. Reflection is opt-in and budget-aware so quality improvements do not silently exceed limits. Per-agent tool budgets and reflection flags let higher-reasoning agents (strategy) use more tools or reflection without raising the global default. Reflection, truncation, iteration, completion, tool error, tool timeout, and retry metrics make the quality, context, loop-exhaustion, efficiency, reliability, and cost impact of the loop measurable.
+Prevents runaway spend on long tool chains or repeated reflections while preserving partial useful output. The tool-call cap provides a second independent safety net even when token pricing estimates are imperfect. The configurable approaching signal and explicit metric events (budget, tool with cost, tool error with cost, tool timeout with cost, LLM retry with cost, reflection, truncation, iteration with cost, and completion with cost) enable proactive HITL or alerting before a hard stop, and make successful outcomes, failures, retries, limits, and actual costs measurable. Reflection is opt-in and budget-aware so quality improvements do not silently exceed limits. Per-agent tool budgets and reflection flags let higher-reasoning agents (strategy) use more tools or reflection without raising the global default. Reflection, truncation, iteration, completion, tool error, tool timeout, and retry metrics make the quality, context, loop-exhaustion, efficiency, reliability, and cost impact of the loop measurable.
 
 ## Suggested Next Steps
 
@@ -44,8 +45,9 @@ Prevents runaway spend on long tool chains or repeated reflections while preserv
 13. Include estimated cost in completion metric. **Done 2026-11-23 / 2026-11-24** (always when tokens used).
 14. Include estimated cost in tool error and timeout metrics. **Done 2026-11-25**.
 15. Include estimated cost in LLM retry metric. **Done 2026-11-26**.
-16. Optional: surface approaching status to the review UI for human awareness.
-17. Add a quality eval for the reflection improvement.
+16. Include estimated cost in iteration and tool-limit metrics. **Done 2026-11-27**.
+17. Optional: surface approaching status to the review UI for human awareness.
+18. Add a quality eval for the reflection improvement.
 
 ## References
 
