@@ -8,13 +8,13 @@ Production reliability features:
 - Retry with backoff on transient API errors
 - Optional reflection pass with token accounting
 - Structured budget metric events for dashboarding
-- Structured tool-call metric events for dashboarding
+- Structured tool-call metric events for dashboarding (includes estimated cost when available)
 - Structured tool error metric events for dashboarding (includes estimated cost when available)
 - Structured tool timeout metric events for dashboarding (includes estimated cost when available)
 - Structured LLM retry metric events for dashboarding (includes estimated cost when available)
 - Structured reflection metric events for dashboarding
 - Structured truncation metric events for dashboarding
-- Structured iteration metric events for dashboarding
+- Structured iteration metric events for dashboarding (includes estimated cost when available)
 - Structured completion metric events for dashboarding (always includes estimated cost when tokens used)
 """
 from __future__ import annotations
@@ -54,11 +54,11 @@ def _emit_budget_metric(status: str, estimated_cost_usd: float, budget_usd: floa
     )
 
 
-def _emit_tool_metric(status: str, tool_calls_made: int, max_tool_calls: int, **extra: Any) -> None:
+def _emit_tool_metric(status: str, tool_calls_made: int, max_tool_calls: int, estimated_cost_usd: float | None = None, **extra: Any) -> None:
     """Emit a consistent structured event for tool-call limit observability.
 
     Always logs with metric='cognitive_loop_tool_event' so dashboards/alerts can key on it
-    without a dedicated metrics client.
+    without a dedicated metrics client. Includes estimated cost when available.
     """
     payload = {
         "metric": "cognitive_loop_tool_event",
@@ -67,15 +67,15 @@ def _emit_tool_metric(status: str, tool_calls_made: int, max_tool_calls: int, **
         "max_tool_calls": max_tool_calls,
         **extra,
     }
+    if estimated_cost_usd is not None:
+        payload["estimated_cost_usd"] = estimated_cost_usd
+    log_msg = "cognitive_loop_tool_event status=%s tool_calls_made=%d max_tool_calls=%d"
+    log_args = [status, tool_calls_made, max_tool_calls]
+    if estimated_cost_usd is not None:
+        log_msg += " estimated_cost_usd=%.4f"
+        log_args.append(estimated_cost_usd)
     level = logging.WARNING if status == "limit_reached" else logging.INFO
-    logger.log(
-        level,
-        "cognitive_loop_tool_event status=%s tool_calls_made=%d max_tool_calls=%d",
-        status,
-        tool_calls_made,
-        max_tool_calls,
-        extra=payload,
-    )
+    logger.log(level, log_msg, *log_args, extra=payload)
 
 
 def _emit_tool_error_metric(tool_name: str, error: str, estimated_cost_usd: float | None = None, **extra: Any) -> None:
@@ -201,11 +201,11 @@ def _emit_truncation_metric(
     )
 
 
-def _emit_iteration_metric(max_iterations: int, **extra: Any) -> None:
+def _emit_iteration_metric(max_iterations: int, estimated_cost_usd: float | None = None, **extra: Any) -> None:
     """Emit a consistent structured event when the max iteration limit is reached.
 
     Always logs with metric='cognitive_loop_iteration_event' so dashboards can track
-    loops that exhaust their iteration budget.
+    loops that exhaust their iteration budget. Includes estimated cost when available.
     """
     payload = {
         "metric": "cognitive_loop_iteration_event",
@@ -213,11 +213,14 @@ def _emit_iteration_metric(max_iterations: int, **extra: Any) -> None:
         "max_iterations": max_iterations,
         **extra,
     }
-    logger.warning(
-        "cognitive_loop_iteration_event status=max_reached max_iterations=%d",
-        max_iterations,
-        extra=payload,
-    )
+    if estimated_cost_usd is not None:
+        payload["estimated_cost_usd"] = estimated_cost_usd
+    log_msg = "cognitive_loop_iteration_event status=max_reached max_iterations=%d"
+    log_args = [max_iterations]
+    if estimated_cost_usd is not None:
+        log_msg += " estimated_cost_usd=%.4f"
+        log_args.append(estimated_cost_usd)
+    logger.warning(log_msg, *log_args, extra=payload)
 
 
 def _emit_completion_metric(
@@ -355,11 +358,16 @@ async def run_tool_loop(
         # Execute tools
         tool_results: list[dict[str, Any]] = []
         for tu in tool_uses:
+            # Current estimated cost for correlation with limit events
+            current_est = None
+            if cfg.total_input_tokens + cfg.total_output_tokens > 0:
+                current_est = estimate_cost_usd(model, cfg.total_input_tokens, cfg.total_output_tokens)
             if cfg.tool_calls_made >= cfg.max_tool_calls:
                 _emit_tool_metric(
                     "limit_reached",
                     cfg.tool_calls_made,
                     cfg.max_tool_calls,
+                    estimated_cost_usd=current_est,
                     iteration=iteration,
                 )
                 return last_text or "[stopped: max tool calls reached]", tool_log, thinking
@@ -367,10 +375,6 @@ async def run_tool_loop(
             name = getattr(tu, "name", "unknown")
             inp = getattr(tu, "input", {}) or {}
             tool_id = getattr(tu, "id", "")
-            # Current estimated cost for correlation with failures
-            current_est = None
-            if cfg.total_input_tokens + cfg.total_output_tokens > 0:
-                current_est = estimate_cost_usd(model, cfg.total_input_tokens, cfg.total_output_tokens)
             try:
                 if tool_executor is None:
                     result: Any = {"error": "no tool executor configured"}
@@ -403,7 +407,11 @@ async def run_tool_loop(
         messages.append({"role": "user", "content": tool_results})
         params["messages"] = messages
 
-    _emit_iteration_metric(cfg.max_iterations)
+    # Current estimated cost for iteration limit
+    current_est = None
+    if cfg.total_input_tokens + cfg.total_output_tokens > 0:
+        current_est = estimate_cost_usd(model, cfg.total_input_tokens, cfg.total_output_tokens)
+    _emit_iteration_metric(cfg.max_iterations, estimated_cost_usd=current_est)
     logger.warning("max_iterations_reached limit=%d", cfg.max_iterations)
     return last_text, tool_log, thinking
 
@@ -481,22 +489,16 @@ async def _maybe_reflect(
             if cfg.cost_budget_usd is not None:
                 est = estimate_cost_usd(model, cfg.total_input_tokens, cfg.total_output_tokens)
                 if est > cfg.cost_budget_usd:
-                    _emit_budget_metric("exceeded", est, cfg.cost_budget_usd, phase="reflection")
-                    _emit_reflection_metric(False, original_chars, original_chars, budget_exceeded=True)
-                    return text  # keep original; do not use potentially over-budget reflection
-
-        text_parts: list[str] = []
+                    logger.info("reflection_budget_exceeded estimated_cost_usd=%.4f budget=%.4f", est, cfg.cost_budget_usd)
+                    return text  # keep original
+        # Extract refined text
+        refined = ""
         for block in getattr(response, "content", []) or []:
             if getattr(block, "type", None) == "text":
-                text_parts.append(getattr(block, "text", "") or "")
-        refined = "\n".join(t for t in text_parts if t).strip()
-        if refined and refined != text:
-            _emit_reflection_metric(True, original_chars, len(refined))
-            return refined
-        _emit_reflection_metric(False, original_chars, original_chars)
+                refined += getattr(block, "text", "") or ""
+        refined = refined.strip()
+        changed = bool(refined and refined != text)
+        _emit_reflection_metric(changed, original_chars, len(refined) if refined else original_chars)
+        return refined if changed else text
+    except Exception:
         return text
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("reflection_failed falling_back_to_original: %s", exc)
-        _emit_reflection_metric(False, original_chars, original_chars, error=str(exc)[:200])
-
-    return text

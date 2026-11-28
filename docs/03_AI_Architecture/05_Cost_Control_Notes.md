@@ -23,6 +23,7 @@
 - 2026-11-25: Tool error and timeout metrics now include estimated_cost_usd when tokens have been used, improving failure-to-spend correlation.
 - 2026-11-26: LLM retry metric now includes estimated_cost_usd when tokens have been used, improving retry-to-spend correlation.
 - 2026-11-27: Iteration and tool-limit metrics now include estimated_cost_usd when tokens have been used, improving limit-to-spend correlation.
+- 2026-11-28: Tool-limit and iteration metrics now include estimated_cost_usd when tokens have been used (implementation completed), improving limit-to-spend correlation.
 
 ## Rationale
 
@@ -45,7 +46,7 @@ Prevents runaway spend on long tool chains or repeated reflections while preserv
 13. Include estimated cost in completion metric. **Done 2026-11-23 / 2026-11-24** (always when tokens used).
 14. Include estimated cost in tool error and timeout metrics. **Done 2026-11-25**.
 15. Include estimated cost in LLM retry metric. **Done 2026-11-26**.
-16. Include estimated cost in iteration and tool-limit metrics. **Done 2026-11-27**.
+16. Include estimated cost in iteration and tool-limit metrics. **Done 2026-11-27 / 2026-11-28** (implementation).
 17. Optional: surface approaching status to the review UI for human awareness.
 18. Add a quality eval for the reflection improvement.
 
